@@ -1,0 +1,73 @@
+.personnelStatistics{
+  // position: absolute;
+  // left: 20px;
+  // top: 125px;
+  position: absolute;
+  width: 100%;
+  height: 294px;
+  .header{
+    width: 100%;
+    height: 40px;
+    background: url('/image/titlebg.png');
+    background-size: 100% 100%;
+    > span{
+      margin-left: 10px;
+      height: 40px;
+      line-height: 40px;
+      background: linear-gradient(0deg,#7dc2fe 0%, #e4f2ff 100%);
+      -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
+      -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+      font-size: 18px;
+      font-family: Alimama ShuHeiTi, Alimama ShuHeiTi-Bold;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.36px;
+
+    }
+  }
+  .content{
+    width: 100%;
+    height: 254px;
+    background: rgba(8, 15, 24,0.4);
+    display: inline-block;
+    padding: 20px;
+
+    .contentItem{
+      width: 50%;
+      height: 80px;
+      display: inline-flex;
+      > img{
+        width: 60px;
+        height: 60px;
+        // width: 80%;
+        //  height: 100%;
+        //  object-fit: contain;
+      }
+      .text{
+        margin: 5px 5px 0 10px;
+        width: 100px;
+        .text1{
+          font-size: 12px;
+          // font-family: Alibaba PuHuiTi 3.0, Alibaba PuHuiTi 3.0-55 Regular;
+          font-weight: normal;
+          color: #cccccc;
+        }
+        .text2{
+          font-size: 16px;
+          // font-family: Alibaba PuHuiTi 3.0, Alibaba PuHuiTi 3.0-55 Regular;
+          font-weight: normal;
+          color: #ffffff;
+        }
+
+      }
+
+
+    }
+  }
+  .line{
+    width: 100%;
+    height: 1px;
+    background: url('/image/line.png');
+    background-size: 100% 100%;
+  }
+}

@@ -1,0 +1,224 @@
+@font-face {
+  font-family: YouSheBiaoTiHei;
+  src: url(../../assets/fonts/YouSheBiaoTiHei.ttf);
+}
+.poiSetting {
+  // position: absolute;
+  // left: 20px;
+  // top: 125px;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .dialog {
+    width: 65%;
+    height: 75%;
+    background: url("/image/popPoi.png");
+    background-size: 100% 100%;
+  }
+
+  .header {
+    width: 100%;
+    height: 60px;
+    > span {
+      margin-left: 40px;
+      height: 40px;
+      line-height: 60px;
+      font-size: 20px;
+      font-family: YouSheBiaoTiHei, YouSheBiaoTiHei-Regular;
+      font-weight: 400;
+      color: #ddf5ff;
+    }
+  }
+  .close {
+    cursor: pointer;
+    font-size: 22px;
+    text-align: end;
+    color: #ffffff;
+    margin: -38px 4px;
+  }
+  .close:hover {
+    color: #29b6ff;
+  }
+  .content {
+    width: 100%;
+    height: calc(100% - 60px); //254px;
+    display: inline-block;
+    padding: 60px 60px 0 60px;
+    margin-top: 40px;
+  }
+  .btn {
+    margin: 10px 0 0 97px;
+  }
+
+  :deep(.el-form-item__label) {
+    color: #fff !important;
+  }
+  :deep(.el-input__wrapper) {
+    background: transparent;
+    box-shadow: 0 0 0 1px rgba(41, 182, 255, 0.5) inset;
+  }
+  :deep(.el-input__inner) {
+    color: #fff;
+  }
+  :deep(.el-radio__inner) {
+    background-color: transparent;
+    border: 1px solid rgba(41, 182, 255, 0.5);
+  }
+  :deep(.el-radio__inner:after) {
+    background-color: #29b6ff;
+    width: 8px;
+    height: 8px;
+  }
+  :deep(.el-radio) {
+    color: #fff;
+  }
+  :deep(.el-radio__input.is-checked + .el-radio__label) {
+    color: #fff;
+  }
+  .richContent {
+    border: 1px solid rgba(41, 182, 255, 0.5);
+    width: 100%;
+    margin-left: 97px;
+    border-radius: 4px;
+  }
+  :deep(.w-e-bar) {
+    background-color: rgba(2, 19, 36,0.5);
+    font-size: 14px;
+  }
+  :deep(.w-e-bar-item button) {
+    color: #29b6ff;
+  }
+  :deep(.w-e-bar-item button:hover) {
+    background-color: rgba(41, 182, 255, 0.3);
+  }
+  :deep(.w-e-bar svg) {
+    fill: #29b6ff;
+  }
+  :deep(.w-e-bar-divider) {
+    background-color: rgba(41, 182, 255, 0.5);
+  }
+  :deep(.w-e-text-container) {
+    background-color: transparent;
+    color: #fff;
+  }
+  :deep(.w-e-text-placeholder) {
+    top: 10px;
+  }
+  // :deep(.w-e-select-list){
+  //   background-color: rgba(41,182,255,0.1);
+  //   color: #29b6ff;
+  //   border:1px solid rgba(41, 182, 255, 0.5);
+  // }
+
+  .uploadContent {
+    display: flex;
+  }
+  // :deep(.el-upload-list__item){
+  //   margin-left: 80px;
+  //   background-color:rgba(41, 182, 255, 0.1);
+  // }
+  // :deep(.el-upload-list__item:hover){
+  //   background-color:rgba(41, 182, 255, 0.5);
+  // }
+  // :deep(.el-upload-list__item-name){
+  //   color: #fff;
+  // }
+  // :deep(.el-upload-list__item-name .el-icon){
+  //   display: none;
+  // }
+  // :deep(.el-upload-list__item .el-icon--upload-success){
+  //   color:#29b6ff;
+  //   opacity: 1;
+
+  // }
+  // :deep(.el-upload-list__item .el-icon--close){
+  //   color:#fff;
+  //   opacity: 1;
+  // }
+  .uploadBtn .el-button {
+    margin-left: 97px;
+    border-color: rgba(41, 182, 255, 0.5);
+
+    > span > img {
+      width: 14px;
+      height: 14px;
+      margin-right: 5px;
+    }
+  }
+  .uploadBtn,
+  .btn {
+    .el-button {
+      background-color: transparent;
+      border-color: #29b6ff;
+      color: #fff;
+    }
+    .el-button--primary {
+      background-color: #29b6ff;
+      color: #fff;
+    }
+    .el-button:hover {
+      background-color: rgba(41, 182, 255, 0.5);
+    }
+    .el-button--primary:hover {
+      background-color: rgba(41, 182, 255, 0.5);
+    }
+  }
+  .uploadItemBtn {
+    margin-left: 20px;
+    width: fit-content;
+  }
+  .fileContent {
+    margin-left: 97px;
+    color: #fff;
+    width: 300px;
+    .fileContentItem {
+      display: flex;
+    }
+    :deep(.el-progress__text) {
+      color: #fff;
+    }
+  }
+  .dialogVideo {
+    position: absolute;
+    width: 65%;
+    height: 75%;
+    background: url("/image/popPoi.png");
+    background-size: 100% 100%;
+    .content {
+      height: auto;
+    }
+  }
+}
+:deep(.w-e-select-list::-webkit-scrollbar) {
+  width: 5px;
+  height: 1px;
+}
+:deep(.w-e-select-list::-webkit-scrollbar-thumb) {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0.5);
+  background: rgba(41, 182, 255, 0.5);
+}
+:deep(.w-e-select-list::-webkit-scrollbar-track) {
+  -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0);
+  border-radius: 10px;
+  background: rgba(41, 182, 255, 0);
+}
+:deep(.w-e-scroll::-webkit-scrollbar) {
+  width: 5px;
+  height: 1px;
+}
+:deep(.w-e-scroll::-webkit-scrollbar-thumb) {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0.5);
+  background: rgba(41, 182, 255, 0.5);
+}
+:deep(.w-e-scroll::-webkit-scrollbar-track) {
+  -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0);
+  border-radius: 10px;
+  background: rgba(41, 182, 255, 0);
+}
+
