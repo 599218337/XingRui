@@ -34,29 +34,50 @@ onMounted(async () => {
 })
 
 const addModel = async () => {
-  const tileSet = await Cesium.Cesium3DTileset.fromUrl('model/tileset.json')
-  // tileSet.style = new Cesium.Cesium3DTileStyle({
-  //   color: "color('green')",
-  // })
-  const cartographic = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
-  const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height)
-  const m = Cesium.Transforms.eastNorthUpToFixedFrame(surface)
-  const _scale = Cesium.Matrix4.fromUniformScale(10)
-  Cesium.Matrix4.multiply(m, _scale, m)
-  tileSet.root.transform = m
-  const cartographic2 = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
-  const surface2 = Cesium.Cartesian3.fromRadians(cartographic2.longitude, cartographic2.latitude, cartographic2.height)
-  const offset = Cesium.Cartesian3.fromDegrees(117.05435995706138, 36.674984212615854, 20)
-  const translation = Cesium.Cartesian3.subtract(offset, surface2, new Cesium.Cartesian3())
-  tileSet.modelMatrix = Cesium.Matrix4.fromTranslation(translation)
-  // const rotationAngle = Cesium.Math.toRadians(45) // 45度旋转角度
-  // const rotationMatrix = Cesium.Matrix3.fromRotationZ(rotationAngle)
-  // const rotationMatrix4 = Cesium.Matrix4.fromRotationTranslation(rotationMatrix)
+  // const tileSet = await Cesium.Cesium3DTileset.fromUrl('model/tileset.json')
+  // // tileSet.style = new Cesium.Cesium3DTileStyle({
+  // //   color: "color('green')",
+  // // })
+  // const cartographic = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
+  // const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height)
+  // const m = Cesium.Transforms.eastNorthUpToFixedFrame(surface)
+  // const _scale = Cesium.Matrix4.fromUniformScale(10)
+  // Cesium.Matrix4.multiply(m, _scale, m)
+  // tileSet.root.transform = m
+  // const cartographic2 = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
+  // const surface2 = Cesium.Cartesian3.fromRadians(cartographic2.longitude, cartographic2.latitude, cartographic2.height)
+  // const offset = Cesium.Cartesian3.fromDegrees(117.05435995706138, 36.674984212615854, 20)
+  // const translation = Cesium.Cartesian3.subtract(offset, surface2, new Cesium.Cartesian3())
+  // tileSet.modelMatrix = Cesium.Matrix4.fromTranslation(translation)
+  // // const rotationAngle = Cesium.Math.toRadians(45) // 45度旋转角度
+  // // const rotationMatrix = Cesium.Matrix3.fromRotationZ(rotationAngle)
+  // // const rotationMatrix4 = Cesium.Matrix4.fromRotationTranslation(rotationMatrix)
 
-  // // 将旋转矩阵应用到模型矩阵上
-  // Cesium.Matrix4.multiply(tileSet.modelMatrix, rotationMatrix4, tileSet.modelMatrix)
-  viewer.scene.primitives.add(tileSet)
-  viewer.zoomTo(tileSet)
+  // // // 将旋转矩阵应用到模型矩阵上
+  // // Cesium.Matrix4.multiply(tileSet.modelMatrix, rotationMatrix4, tileSet.modelMatrix)
+  // viewer.scene.primitives.add(tileSet)
+  // viewer.zoomTo(tileSet)
+
+  gs3d.manager.layerManager.addLayer(
+    {
+      id: 'model',
+      label: 'model',
+      type: 'model_3d_tiles',
+      url: 'model/tileset.json',
+      setPosition: {
+        lng: 117.05435995706138,
+        lat:  36.674984212615854,
+        height: -10,
+      },
+      rotate: {
+        x: 0,
+        y: 0,
+        z: 39,
+      },
+      scale: 1,
+      islocation: true,
+    },
+  )
 }
 
 addModel()
