@@ -1,0 +1,279 @@
+.cameraStatistics {
+  // position: absolute;
+  // left: 20px;
+  // top: 125px;
+  position: absolute;
+  left: -374px;
+  width: 100%;
+  height: calc(100% - 160px);
+  top: 80px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  #cameraBtn {
+    margin-left: 6px;
+    width: 20px;
+    height: 44px;
+    background: url("/image/zhankai.png");
+    background-size: 100% 100%;
+    cursor: pointer;
+  }
+
+  .widget {
+    width: calc(100% - 26px);
+    height: 100%;
+    padding-left: 20px;
+
+    .header {
+      width: 100%;
+      height: 40px;
+      background: url("/image/titlebg.png");
+      background-size: 100% 100%;
+
+      >span {
+        margin-left: 10px;
+        height: 40px;
+        line-height: 40px;
+        background: linear-gradient(0deg, #7dc2fe 0%, #e4f2ff 100%);
+        -webkit-background-clip: text;
+        /*将设置的背景颜色限制在文字中*/
+        -webkit-text-fill-color: transparent;
+        /*给文字设置成透明*/
+        font-size: 18px;
+        font-family: Alimama ShuHeiTi, Alimama ShuHeiTi-Bold;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: 0.36px;
+      }
+    }
+
+    .content {
+      width: 100%;
+      height: calc(100% - 40px);
+      background: rgba(8, 15, 24, 0.4);
+      display: inline-block;
+      padding: 14px;
+      overflow-y: auto;
+
+      .contentItem {
+        cursor: pointer;
+        width: 100%;
+        height: 40px;
+        background: rgba(19, 44, 69, 0.4);
+        border: 1px solid rgba(12, 137, 234, 0.4);
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: inline-flex;
+        align-items: center;
+
+        .Item {
+          display: inline-flex;
+          align-items: center;
+          // width: calc(100% - 20px);
+          width: 78%;
+
+          .point {
+            width: 7px;
+            height: 7px;
+            border-radius: 25px;
+            margin: 0 14px;
+          }
+
+          .text {
+            font-size: 12px;
+            font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
+            font-weight: normal;
+            color: #ffffff;
+          }
+        }
+
+        .icon {
+          width: 20%;
+          display: inline-flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .view {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            background: url("/image/查看.png");
+            background-size: 100% 100%;
+          }
+
+          .edit {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            background: url("/image/编辑.png");
+            background-size: 100% 100%;
+          }
+
+          .arrow {
+            width: 7px;
+            height: 12px;
+            background: url("/image/dsj.png");
+            background-size: 100% 100%;
+          }
+        }
+      }
+    }
+
+    .content::-webkit-scrollbar {
+      width: 5px;
+      height: 1px;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+      -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0.5);
+      background: rgba(41, 182, 255, 0.5);
+    }
+
+    .content::-webkit-scrollbar-track {
+      -webkit-box-shadow: inset 0 0 5px rgba(41, 182, 255, 0);
+      border-radius: 10px;
+      background: rgba(41, 182, 255, 0);
+    }
+
+    .line {
+      width: 100%;
+      height: 1px;
+      background: url("/image/line.png");
+      background-size: 100% 100%;
+      margin-top: -10px;
+    }
+  }
+}
+
+.editMessage {
+  position: absolute;
+  top: 141px;
+  left: calc(960px - 250px);
+  width: 500px;
+  height: 40px;
+  display: inline-flex;
+  justify-content: center;
+
+  .edit1 {
+    margin: 0 auto;
+    width: 400px;
+    height: 40px;
+    background: #132c45;
+    border: 1px solid #0c89ea;
+    border-radius: 4px;
+    display: inline-flex;
+    padding: 0 15px;
+    align-items: center;
+
+    >span {
+      font-size: 14px;
+      font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
+      font-weight: normal;
+      color: #ffffff;
+      width: 80%;
+    }
+
+    .confirm {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      background: url("/image/是.png");
+      background-size: 100% 100%;
+    }
+
+    .cancle {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      background: url("/image/否.png");
+      background-size: 100% 100%;
+      margin-right: 20px;
+    }
+  }
+
+  .edit2 {
+    margin: 0 auto;
+    width: 400px;
+    height: 40px;
+    background: #132c45;
+    border: 1px solid #0c89ea;
+    border-radius: 4px;
+    display: inline-flex;
+    padding: 0 15px;
+    align-items: center;
+
+    >span {
+      font-size: 14px;
+      font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
+      font-weight: normal;
+      color: #ffffff;
+      width: 80%;
+    }
+
+    .tran,
+    .roate {
+      cursor: pointer;
+      width: 70px;
+      height: 30px;
+      background: #132c45;
+      border: 1px solid #0c89ea;
+      border-radius: 4px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 5px;
+
+      .icon {
+        width: 16px;
+        height: 16px;
+        background: url("/image/平移.png");
+        background-size: 100% 100%;
+        margin-right: 5px;
+      }
+
+      .text {
+        font-size: 14px;
+        font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
+        font-weight: normal;
+        color: #ffffff;
+      }
+    }
+
+    .tran {
+      margin-right: 10px;
+    }
+
+    .roate {
+      margin-right: 55px;
+
+      .icon {
+        background: url("/image/旋转.png");
+        background-size: 100% 100%;
+      }
+    }
+
+    .tran:hover,
+    .roate:hover {
+      background: #1f4f7e;
+    }
+
+    .confirm {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      background: url("/image/是.png");
+      background-size: 100% 100%;
+    }
+
+    .cancle {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      background: url("/image/否.png");
+      background-size: 100% 100%;
+      margin-right: 20px;
+    }
+  }
+}

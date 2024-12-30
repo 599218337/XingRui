@@ -1,0 +1,202 @@
+// @import "@/assets/lib/mixin";
+// @keyframes move{
+//     0%{left: 206px;}
+//     /* 50%{width:147px;} */
+//     100%{left: 82px;}
+// }
+// @keyframes move2{
+//     0%{left: 82px;}
+//     /* 50%{width:147px;} */
+//     100%{left: 206px;}
+// }
+
+
+// 自定义罗盘
+.user_custom_ControlBar {
+    position: fixed!important;
+    margin: 0!important;
+    right: 10px;
+    bottom: 200px;
+  
+    &.ControlBar_min {
+        right: 22px;
+        bottom: 37px;
+    }
+    &.ControlBar_hide {
+        display: none;
+    }
+  
+    .lkmap-luopan-bg,
+    .lkmap-compass,
+    .lkmap-rotateLeft,
+    .lkmap-rotateRight,
+    .lkmap-pitchUp,
+    .lkmap-pitchDown {
+        background-image: url("@/assets/home/zhinanzhen.png")!important;
+    }
+  
+  .lkmap-luopan-bg,
+  .lkmap-compass,
+  .lkmap-rotateLeft,
+  .lkmap-rotateRight,
+  .lkmap-pitchUp,
+  .lkmap-pitchDown {
+    background-image: url("@/assets/home/zhinanzhen.png") !important;
+  }
+  }
+
+
+.scene-mapControl {
+	position: fixed;
+	right: 10px;
+	bottom: 10px;
+	z-index: 210;
+	width: 235px;
+
+    .scene-icon {
+        background-image: url("@/assets/scene/scene-control-bg.png");
+        background-size: 150px 100px;
+        background-position: center center;
+        background-repeat: no-repeat;
+    }
+
+
+    .changeZoom {
+        position: fixed!important;
+        bottom: 100px;
+        right: 30px;
+        display: inline-block;
+        width: 40px;
+        height: 95px;
+        border: 1px solid #2D3E73;
+        border-radius: 21px;
+        background: #344884;
+        box-sizing: border-box;
+
+        &.changeZoom-min {
+            bottom: 121px;
+            right: 42px;
+        }
+
+        &::before {
+            position: absolute;
+            top: 44px;
+            display: block;
+            width: 100%;
+            border-bottom: 1px solid #0F3339;
+            content: "";
+        }
+
+        .btns {
+            width: 40px;
+            height: 47px;
+            cursor: pointer;
+            @extend .scene-icon;
+
+            &.plus {
+                // background-position: -89px 10px;
+                background: url("@/assets/scene/add.png") no-repeat;
+                background-size: 24px 24px;
+                background-position: center; /* 图像居中 */
+            }
+            &.reduce {
+                // background-position: -120px 6px;
+                background: url("@/assets/scene/reduce.png") no-repeat;
+                background-size: 24px 24px;
+                background-position: center; /* 图像居中 */
+            }
+
+            &:hover {
+                // background-image: url("@/assets/scene/scene-control-bg-active.png");
+            }
+        }
+
+    }
+
+    // 定位
+    .custrom_position {
+        position: fixed!important;
+        bottom: 40px;
+        right: 25px;
+        width: 48px;
+        height: 48px;
+        background: #334884;
+        border-radius: 24px;
+        border: 1px solid #334884;
+        box-sizing: border-box;
+        cursor: pointer;
+
+        &.position-min {
+            bottom: 45px;
+            right: 112px;
+
+        }
+
+        .position-icon {
+            display: block;
+            margin: 11px;
+            width: 24px;
+            height: 24px;
+            @extend .scene-icon;
+            background-position: -64px -1px
+        }
+        &:hover {
+            .position-icon {
+                background-image: url("@/assets/scene/scene-control-bg-active.png");
+            }
+        }
+
+    }
+    .lkmap-ctrl-group .lkmap-luopan-bg{
+        background: #344884;
+    }
+    // 23D切换
+    .viewType {
+        position: fixed!important;
+        bottom: 105px;
+        right: 82px;
+        display: block;
+        width: 48px;
+        height: 48px;
+        background: #081B2D;
+        border-radius: 24px;
+        border: 1px solid #0F3339;
+        box-sizing: border-box;
+        cursor: pointer;
+
+        &.viewType-min {
+            bottom: 105px;
+            right: 94px;
+
+        }
+
+
+        .pitch-type {
+            display: block;
+            margin: 11px;
+            width: 24px;
+            height: 24px;
+            @extend .scene-icon;
+
+            &.no-pitch {
+                background-position: 0px -2px;
+            }
+            &.yes-pitch {
+                background-position:-32px -2px;
+            }
+
+        }
+
+        &:hover {
+            .pitch-type {
+                background-image: url("@/assets/scene/scene-control-bg-active.png");
+            }
+        }
+
+    }
+
+
+}
+
+
+

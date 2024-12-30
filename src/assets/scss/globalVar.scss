@@ -1,0 +1,53 @@
+//globalVar.scss
+$bg-color: #00f;
+
+
+//globalMixin.scss
+@mixin box-shadow($bulr: 20px, $color: #1989fa7a) {
+  -webkit-box-shadow: 0px 0px $bulr $color;
+  -moz-box-shadow: 0px 0px $bulr $color;
+  box-shadow: 0px 0px $bulr $color;
+}
+
+@mixin transition ($transition) {
+    -webkit-transition: $transition;
+    -moz-transition:    $transition;
+    -ms-transition:     $transition;
+    -o-transition:      $transition;
+}
+
+
+
+@mixin flex(){
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+}
+  
+@mixin flex-direction($dir:row){
+    -webkit-flex-direction: $dir;
+    -moz-flex-direction: $dir;
+    -ms-flex-direction: $dir;
+    flex-direction: $dir;
+}
+
+@mixin flex-wrap($wrap:wrap){
+    -webkit-flex-wrap: $wrap;
+    -moz-flex-wrap: $wrap;
+    -ms-flex-wrap: $wrap;
+    flex-wrap: $wrap;
+}
+
+
+@mixin transform($string){
+    -webkit-transform: $string;
+    -moz-transform:    $string;
+    -ms-transform:     $string;
+    -o-transform:      $string;
+}
+
+@mixin backgroundContain(){
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}

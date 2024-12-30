@@ -1,0 +1,78 @@
+.PoiSelect {
+  position: absolute;
+  width: 70%;
+  height: 190px;
+  left: 15%;
+  bottom: 50px;
+  // border: 1px solid aqua;
+  display: inline-flex;
+  // justify-content: center;
+  // align-items: center;
+  .btnLeft {
+  cursor: pointer;
+    width: 68px;
+    height: 68px;
+    background: url("/image/leftDefault.png");
+    background-size: 100% 100%;
+    margin-top: 91px;
+  }
+  .btnRight {
+    cursor: pointer;
+    width: 68px;
+    height: 68px;
+    background: url("/image/rightDefault.png");
+    background-size: 100% 100%;
+    margin-top: 91px;
+  }
+  .btnLeft:hover {
+    background: url("/image/leftActive.png");
+  }
+  .btnRight:hover {
+    background: url("/image/rightActive.png");
+  }
+  .centerImage {
+    width: calc(100% - 136px);
+    display: inline-flex;
+    // justify-content:left;
+    overflow: hidden;
+    .centerItem {
+      cursor: pointer;
+      margin-top: 30px;
+      margin-left: 10px;
+      margin-right: 10px;
+      .image {
+        transition: all 0.6s;
+        width: 280px;
+        height: 160px;
+        border-radius: 5px;
+        // width: 100%;
+        // height: 100%;
+      }
+      .text {
+        transition: all 0.6s;
+        width: 280px;
+        height: 38px;
+        background-color: black;
+        opacity: 0.6;
+        color: #fff;
+        margin-top: -43px;
+        text-align: center;
+        line-height: 38px;
+        font-size: 14px;
+        font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3 -55 Regular;
+        font-weight: normal;
+      }
+    }
+    .centerItem:hover {
+      margin-top: 0;
+      .image {
+        width: 300px;
+        height: 190px;
+      }
+      .text {
+        width: 300px;
+      }
+    }
+  }
+
+}

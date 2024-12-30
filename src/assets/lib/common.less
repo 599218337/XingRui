@@ -1,0 +1,461 @@
+@import "./mixin.less";
+
+.page-content {
+    font-family: PingFangSC-Medium, PingFang SC;
+    // height: 100%;
+    height: -webkit-calc(100% - 54px);
+    height: -moz-calc(100% - 54px);
+    height: calc(100% - 54px);
+    min-height: 700px;
+    background: #EEF2F9;
+    display:flex;
+    .justify-content(flex-start);
+
+    .sidebar-wrap {
+        flex-shrink: 0;
+        width: 200px;
+        background: #fff;
+    }
+
+    .console-content-box {
+        min-width: 1000px;
+
+
+
+    }
+
+}
+
+#app {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+
+    // 隐藏锚点
+    .anchor {
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+
+    // *******************************按钮样式****************************************
+
+    .btnStyle {
+        text-align: center;
+        background: #0037E4;
+        color: #fff;
+        border-radius: 4px;
+        .transition(all 0.2s ease-in);
+
+        &:hover {
+            cursor: pointer;
+            background: #0050FF;
+        }
+
+    }
+
+    .btn-red {
+        text-align: center;
+        background: #C60100;
+        border-radius: 4px;
+        color: #fff;
+        .transition(all 0.2s ease-in);
+
+        &:hover {
+            cursor: pointer;
+            background: #E82E2D;
+        }
+
+    }
+
+    .btn-border-blue {
+        text-align: center;
+        background: #fff;
+        border-radius: 4px;
+        box-sizing: border-box;
+        border: 1px solid #0037E4;
+        color: #0037E4;
+        .transition(all 0.2s ease-in);
+
+        &:hover {
+            cursor: pointer;
+            background: #0037E4;
+            color: #fff;
+        }
+
+    }
+
+    .btn-border-red {
+        text-align: center;
+        background: #fff;
+        border: 1px solid #C60100;
+        border-radius: 4px;
+        box-sizing: border-box;
+        color: #C60100;
+        .transition(all 0.2s ease-in);
+
+        &:hover {
+            cursor: pointer;
+            background: #C60100;
+            color: #fff;
+        }
+
+    }
+    .ban-click {
+        background: #C0C4CC;
+        color: #F2F6FC;
+        &:hover {
+            cursor: not-allowed;
+            color: #F2F6FC;
+        }
+    }
+
+    .linkBtn {
+        color: #0037E4;
+        
+
+        &:hover {
+            cursor: pointer;
+            color: #0050FF;
+        }
+        &:first-child{
+            margin-right: 14px;
+        }
+    }
+
+    // *******************************模态框****************************************
+    .lk-module {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 100;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+
+        .module-box {
+            min-width: 460px;
+            padding: 0 30px 35px 30px;
+            box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.2);
+            background: #fff;
+            border-radius: 4px;
+
+            // 标题
+            .module-title {
+                height: 54px;
+                border-bottom: 1px solid #B4BAC5;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+
+                .type-icon,
+                .close-module {
+                    display: inline-block;
+                    width: 18px;
+                    height: 18px;
+                    background-repeat: no-repeat;
+                    background-position: center center;
+                    background-size: contain;
+                }
+
+                .type-icon {
+                    margin-right: 10px;
+                }
+
+                .title-type {
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+
+                    .type-name {
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #000;
+                        line-height: 22px;
+                    }
+
+                    // 加号
+                    .massage-icon-add {
+                        background-image: url('@assets/common/massage-icon-add.png');
+                    }
+
+                    // 删除
+                    .massage-icon-del {
+                        background-image: url('@assets/common/massage-icon-del.png');
+                    }
+
+                    // 编辑
+                    .massage-icon-edit {
+                        background-image: url('@assets/common/massage-icon-edit.png');
+                    }
+
+                    // 彻底删除
+                    .massage-icon-empty {
+                        background-image: url('@assets/common/massage-icon-empty.png');
+                    }
+
+                    .massage-icon-warning {
+                        background-image: url('@assets/common/massage-icon-warning.png');
+                    }
+
+                    // 编辑
+                    .massage-icon-edit {
+                        background-image: url('@assets/common/massage-icon-edit.png');
+                    }
+
+                }
+
+                .close-module {
+                    
+                    background-image: url('@assets/common/close-module.png');
+
+                    &:hover {
+                        cursor: pointer;
+                        background-image: url('@assets/common/close-module-hover.png');
+                    }
+                }
+
+
+
+
+
+            }
+
+            // 内容
+            .module-content {
+                min-height: 112px;
+
+                .module-text {
+                    font-size: 14px;
+                    font-family: PingFangSC-Regular, PingFang SC;
+                    font-weight: 400;
+                    color: #000;
+                    line-height: 25px;
+                    text-align: left;
+
+                    // .two-line;
+                }
+            }
+
+            // 按钮
+            .module-bottom {
+                height: 40px;
+                display:flex;
+                align-items:center;
+
+                .btn {
+                    width: 150px;
+                    height: 40px;
+                    text-align: center;
+                    font-size: 14px;
+                    font-family: PingFangSC-Medium, PingFang SC;
+                    font-weight: 500;
+                    line-height: 40px;
+                    margin-right: 10px;
+                    letter-spacing: 5px;
+                    padding-left: 10px;
+                    border-radius: 4px;
+                    box-sizing: border-box;
+                    .transition(all 0.2s ease-in);
+
+                    &:last-child {
+                        margin-right: 0;
+                    }
+                }
+
+                .close {
+                    background: #fff;
+                    box-sizing: border-box;
+                    border: 1px solid #0037E4;
+                    color: #0037E4;
+
+                    &:hover {
+                        cursor: pointer;
+                        background: #0050FF;
+                        color: #fff;
+                    }
+                }
+
+                .redClose {
+                    background: #fff;
+                    border: 1px solid #C60100;
+                    box-sizing: border-box;
+                    color: #C60100;
+
+                    &:hover {
+                        cursor: pointer;
+                        background: #C60100;
+                        color: #fff;
+                    }
+                }
+
+                .confirm {
+                    background: #0037E4;
+                    color: #fff;
+
+                    &:hover {
+                        cursor: pointer;
+                        background: #0050FF;
+                    }
+                }
+
+                .redConfirm {
+                    background: #C60100;
+                    color: #fff;
+
+                    &:hover {
+                        cursor: pointer;
+                        background: #E82E2D;
+                    }
+                }
+                .ban-click {
+                    background: #C0C4CC;
+                    color: #F2F6FC;
+                    &:hover {
+                        cursor: not-allowed;
+                        color: #F2F6FC;
+                        background: #C0C4CC;
+                    }
+                }
+
+            }
+
+            .flex-center {
+                justify-content:center;
+            }
+
+            .flex-start {
+                .justify-content(flex-start);
+            }
+
+            .flex-end {
+                .justify-content(flex-end);
+            }
+        }
+
+
+
+
+
+
+
+
+
+    }
+
+    // *******************************模态框--end****************************************
+
+    input[type=text] {
+        border-radius: 4px;
+    }
+    input[type=password] {
+        border-radius: 4px;
+    }
+    input::-webkit-input-placeholder {
+        /* WebKit, Blink, Edge */
+        color: #C0C4CC;
+        line-height: 42px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+
+    }
+
+    input:-moz-placeholder {
+        /* Mozilla Firefox 4 to 18 */
+        color: #C0C4CC;
+        line-height: 42px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    input::-moz-placeholder {
+        /* Mozilla Firefox 19+ */
+        color: #C0C4CC;
+        line-height: 42px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    input:-ms-input-placeholder {
+        /* Internet Explorer 10-11 */
+        color: #C0C4CC;
+        line-height: 42px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    // textarea
+    textarea {
+        border-radius: 2px;
+    }
+    textarea::-webkit-input-placeholder {
+        /* WebKit, Blink, Edge */
+        color: #C0C4CC;
+        line-height: 20px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    textarea:-moz-placeholder {
+        /* Mozilla Firefox 4 to 18 */
+        color: #C0C4CC;
+        line-height: 20px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    textarea::-moz-placeholder {
+        /* Mozilla Firefox 19+ */
+        color: #C0C4CC;
+        line-height: 20px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    textarea:-ms-input-placeholder {
+        /* Internet Explorer 10-11 */
+        color: #C0C4CC;
+        line-height: 20px;
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+    }
+
+    input:focus {
+        border-color: #0037E4;
+    }
+
+    textarea:focus {
+        border-color: #0037E4;
+    }
+
+
+
+
+
+
+}
+
+
+// 设置全局下拉框样式，解决问题
+.el-scrollbar {
+    // padding-bottom: 5px!important; //影响 table 表格样式
+    position: relative;
+    &::after {
+        content: "";
+        width: 100%;
+        height: 10px;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 4px;
+    }
+    // .el-scrollbar__wrap {
+    // }
+}
