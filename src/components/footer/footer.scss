@@ -2,6 +2,7 @@
   font-family: YouSheBiaoTiHei;
   src: url(../../assets/fonts/YouSheBiaoTiHei.ttf);
 }
+
 .footer_wrapper {
   display: flex;
   position: absolute;
@@ -13,25 +14,31 @@
   margin: 0 auto;
   z-index: 999;
   // transform: translate(-50%,0%);
+  transform: scale(var(--scaleX), var(--scaleY));
   background-image: url("/image/bottombg.png");
   background-size: 100% 100%;
+
   .btnContent {
     margin: 0 auto;
     display: flex;
     justify-content: center;
     align-items: center;
+
     .btn {
       width: 120px;
       height: 100px;
       margin: 0 10px -10px 10px;
       cursor: pointer;
+
       .text {
         position: absolute;
         bottom: 62px;
         margin: 0 22px;
         background: linear-gradient(0deg, #f9fcff 0%, #adccdc 100%);
-        -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
-        -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+        -webkit-background-clip: text;
+        /*将设置的背景颜色限制在文字中*/
+        -webkit-text-fill-color: transparent;
+        /*给文字设置成透明*/
         -webkit-text-stroke: 0.6px #1681b5;
         font-size: 22px;
         font-family: YouSheBiaoTiHei;
@@ -39,13 +46,16 @@
         color: #fefefe;
         letter-spacing: 0.44px;
       }
+
       .text_active {
         position: absolute;
         bottom: 62px;
         margin: 0 22px;
-        background: linear-gradient(0deg,#f9fcff 0%, #addcd7 100%);
-        -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
-        -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+        background: linear-gradient(0deg, #f9fcff 0%, #addcd7 100%);
+        -webkit-background-clip: text;
+        /*将设置的背景颜色限制在文字中*/
+        -webkit-text-fill-color: transparent;
+        /*给文字设置成透明*/
         -webkit-text-stroke: 0.6px #19bcbe;
         font-size: 22px;
         font-family: YouSheBiaoTiHei;
@@ -53,11 +63,13 @@
         color: #fefefe;
         letter-spacing: 0.44px;
       }
+
       .img {
         background-image: url("/image/btn.png");
         background-size: 100% 100%;
         height: 80px;
       }
+
       .img_active {
         background-image: url("/image/btn_active.png");
         background-size: 100% 100%;
