@@ -158,7 +158,7 @@ function initViewer(container: HTMLElement | string, options?: { [key: string]: 
   // }
   let defaultConfig = { ...gs3dConfig, ...config }
   Cesium.Ion.defaultAccessToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlNTE2ZjQxMC1kM2MzLTQ2ZjYtOWRmMy1iMDI2ZDMzNzk2MjQiLCJpZCI6MTUyOTU4LCJpYXQiOjE2ODkwMzkyNjZ9.XtK5M64XDm9A2DKCvB1orTDETPMZYsVMNyemQ_QjDiA'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1NGExOTlkZS1jNTllLTQyNDktOGNmNC02N2NlM2MxZDA4ZmUiLCJpZCI6MzA5MTM2LCJpYXQiOjE3NDkwMzAxNDB9.Y4bU1eS1HPcSW0Cof1iP86sjpHWatKP0ltct2Ys4ez0'
   //初始化定位到配置文件中所处于的矩形范围内
   // if (defaultConfig?.map?.rectangle) {
   //   Cesium.Camera.DEFAULT_VIEW_RECTANGLE = Cesium.Rectangle.fromDegrees(...defaultConfig.map.rectangle)

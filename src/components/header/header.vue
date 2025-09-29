@@ -56,7 +56,7 @@ onUnmounted(() => {
 const getWeather = () => {
   axios.get('https://restapi.amap.com/v3/weather/weatherInfo', {
     params: {
-      key: 'c4d5a8f8b9d2f351d0bd7ec75c447707',
+      key: 'd7434d18fbd2ed8ee70940db0da98639',
       city: '420505',
       // extensions:'base'
     },

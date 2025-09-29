@@ -43,16 +43,16 @@ const btnArray = ref([
     label: '告警信息',
   },
   {
+    id: 5,
+    label: '气体报警',
+  },
+  {
     id: 3,
     label: '人员定位',
   },
   {
     id: 4,
     label: '设备信息',
-  },
-  {
-    id: 5,
-    label: '巡检信息',
   },
 
 ])
@@ -66,7 +66,7 @@ const changeBtn = (id) => {
   if (id !== 4 && active.value == id && isSameIndex) {
     isSameIndex = false
     active.value = null
-    removeCustomPOI()
+    // removeCustomPOI()
     store.state.showCamera && store.dispatch("setShowCamera", false);
     store.state.showFire && store.dispatch("setShowFire", false);
     store.state.showPerson && store.dispatch("setShowPerson", false);
