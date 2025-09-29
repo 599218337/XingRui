@@ -1,0 +1,122 @@
+@font-face {
+  font-family: Alimama ShuHeiTi;
+  src: url(../../assets/fonts/Alimama-ShuHeiTi.ttf);
+}
+.login-wrap {
+  width: 100%;
+  height: 100%;
+  background: url("/image/lbg.jpg");
+  background-size: 100% 100%;
+  display: flex;
+  justify-content: center;
+  .ray{
+    border-width: 0px;
+    position: absolute;
+    // left: 446px;
+    // top: 80px;
+    width: 1000px;
+    height: 800px;
+    opacity: 0.2;
+
+  }
+  .title {
+    position: absolute;
+    top: 188px;
+    background: linear-gradient(180deg, #c5e4ff 0%, #5bb2ff 100%);
+    font-size: 32px;
+    font-family: Alimama ShuHeiTi, Alimama ShuHeiTi-Bold;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1.6px;
+    -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
+    -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+  }
+  .content {
+    position: absolute;
+    width: 462px;
+    height: 502px;
+    top: 258px;
+    background: url("/image/lbgk.png");
+    padding: 41px;
+    .formTitle {
+      display: inline-flex;
+      align-items: center;
+      font-size: 18px;
+      font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
+      font-weight: normal;
+      color: #009bfe;
+      .line {
+        width: 3px;
+        height: 15px;
+        background: #009bfe;
+        border-radius: 1px;
+        margin-right: 11px;
+      }
+    }
+    .formContent {
+      padding: 40px 0;
+
+      .piccode {
+        // border: 1px solid #009bfe;
+        margin: 0 5px;
+      }
+      .pass-option {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        margin: -10px 0 10px 0;
+
+        .remember-pass {
+          width: 50%;
+        }
+        .forgot-pass {
+          width: 50%;
+          font-size: 14px;
+          font-weight: normal;
+          color: #aeb5b9;
+          text-align: end;
+          cursor: pointer;
+        }
+        .forgot-pass:hover{
+            color: #009BFE;
+        }
+      }
+      .submit-btn {
+        width: 100%;
+        height: 50px;
+      }
+    }
+  }
+}
+
+.el-input {
+  --el-input-text-color: #fff;
+  // --el-text-color-placeholder:#5E6A78;
+  --el-input-border: #164a7a;
+  --el-input-border-color: #164a7a;
+  --el-input-hover-border-color: #009bfe;
+  // --el-input-hover-border:#009BFE;
+  // --el-input-focus-border:#009BFE;
+}
+//   .el-input__inner{
+//     color:#5E6A78
+//   }
+.el-input--large {
+  height: 50px;
+}
+.el-input__wrapper {
+  background-color: transparent;
+}
+.el-input__inner {
+  font-size: 16px;
+}
+.el-input__inner::placeholder {
+  color: #5e6a78 !important;
+}
+.el-checkbox__inner {
+  background-color: transparent;
+  border-color:#B1B8BB;
+}
+.el-checkbox__label{
+    color: #AEB5B9;
+}

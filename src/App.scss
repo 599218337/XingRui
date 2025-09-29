@@ -1,0 +1,67 @@
+// 页面布局样式
+.common-layout {
+    height: 100%;
+    width: 100%;
+
+    .layout-header {
+        background: #292626;
+        color: #fff;
+        border-bottom: 1px solid #545c64;
+    }
+
+    .layout-box{
+        height: 100%;
+
+    }
+    .layout-container {
+    height: 100%;
+
+    }
+
+    .layout-aside {
+        width: auto;
+        background: #545c64;
+    }
+
+    .layout-main {
+        padding: 0;
+
+
+        // 子页面切换动画
+        .fade-enter-from,
+        .fade-leave-to {
+            /*定义进入开始和离开结束的透明度为0*/
+            opacity: 0;
+            // transform: translateX(20px);
+            transform: translateX(0px);
+        }
+        .fade-enter-to {
+            transform: translateX(0px);
+        }
+        .fade-enter-to,
+        .fade-leave-from {
+            /*定义进入结束和离开开始的透明度为1*/
+            opacity: 1;
+        }
+        .fade-leave-active,
+        .fade-enter-active {
+            transition: all 0.3s ease-out;
+        }
+    }
+    
+}
+.el-form-item {
+    margin: 0 5px !important;
+    // padding: 20px;
+    // background-color: ;
+  }
+
+   
+   .el-form-item__label {
+    color: white !important;
+  }
+  .info_warpper{
+    pointer-events: all;
+  }
+
+  

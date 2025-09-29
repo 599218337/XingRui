@@ -11,6 +11,7 @@ export default defineConfig({
       'cesium': fileURLToPath(new URL('./public/gs3d/lib/CesiumChanged/index.js', import.meta.url)),
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       "@assets": "./src/assets",
+      "@router": "/src/router",
     }
   },
   css: {

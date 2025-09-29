@@ -9,7 +9,7 @@
 // 顶部导航
 import headerNav from "./header/header.vue";
 // 加载框
-import Loading from "./Loading/Loading.vue";
+// import Loading from "./Loading/Loading.vue";
 // import WDPMap from "./WDPMap/WDPMap.vue";
 
 
@@ -52,7 +52,7 @@ import footerNav from "./footer/footer.vue"
 export {
   headerNav,
   // WDPMap,
-  Loading,
+  // Loading,
   personnelStatistics,
   alarmStatistics,
   environmentalData,
