@@ -19,12 +19,11 @@ import { onMounted, ref, reactive, watch } from 'vue'
 import { useStore } from "vuex";
 
 import utils from '@/utils/utils'
-
 const time = ref('')
 let timer = null
 const store = useStore();
 const { Cesium } = gs3d
-let viewer: any
+let viewer: any = ref(null)
 const homeref = ref(null)
 const Specifications = reactive({
   //定义的宽高比例，初始为1
@@ -66,35 +65,13 @@ onMounted(async () => {
     infoBox: true
     // terrain: Cesium.Terrain.fromWorldTerrain(),
   };
-  viewer = gs3d.global.initViewer('mapContainer', defopt);
+  viewer.value = gs3d.global.initViewer('mapContainer', defopt);
   addModel()
 
 })
 
 const addModel = async () => {
-  // const tileSet = await Cesium.Cesium3DTileset.fromUrl('model/tileset.json')
-  // // tileSet.style = new Cesium.Cesium3DTileStyle({
-  // //   color: "color('green')",
-  // // })
-  // const cartographic = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
-  // const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height)
-  // const m = Cesium.Transforms.eastNorthUpToFixedFrame(surface)
-  // const _scale = Cesium.Matrix4.fromUniformScale(10)
-  // Cesium.Matrix4.multiply(m, _scale, m)
-  // tileSet.root.transform = m
-  // const cartographic2 = Cesium.Cartographic.fromCartesian(tileSet.boundingSphere.center)
-  // const surface2 = Cesium.Cartesian3.fromRadians(cartographic2.longitude, cartographic2.latitude, cartographic2.height)
-  // const offset = Cesium.Cartesian3.fromDegrees(117.05435995706138, 36.674984212615854, 20)
-  // const translation = Cesium.Cartesian3.subtract(offset, surface2, new Cesium.Cartesian3())
-  // tileSet.modelMatrix = Cesium.Matrix4.fromTranslation(translation)
-  // // const rotationAngle = Cesium.Math.toRadians(45) // 45度旋转角度
-  // // const rotationMatrix = Cesium.Matrix3.fromRotationZ(rotationAngle)
-  // // const rotationMatrix4 = Cesium.Matrix4.fromRotationTranslation(rotationMatrix)
 
-  // // // 将旋转矩阵应用到模型矩阵上
-  // // Cesium.Matrix4.multiply(tileSet.modelMatrix, rotationMatrix4, tileSet.modelMatrix)
-  // viewer.scene.primitives.add(tileSet)
-  // viewer.zoomTo(tileSet)
 
   gs3d.manager.layerManager.addLayer(
     {
@@ -118,6 +95,50 @@ const addModel = async () => {
   )
 }
 
+
+const pickPoint = () => {
+  const gridPickSearch = new gs3d.tools.areaFeaturePick({
+    viewer: viewer.value,
+    callback: (pm: any, type: any) => {
+      console.log('拾取回调', pm, type) //pm为拾取的geojson，type当本次为清除事件的回调时为"clear"
+      viewer.value.camera.setView({
+        destination: gs3d.Cesium.Cartesian3.fromRadians(
+          viewer.value.camera.positionCartographic.longitude,
+          viewer.value.camera.positionCartographic.latitude,
+          gs3d.grid.util.levelSize.calculateHeightWithMapLevel(15) - 0.1
+        ),
+        // duration:1
+      });
+
+    },
+  })
+
+  gridPickSearch.activate({
+    type: 'point',
+    option: {
+      graphicName: 'ServicePreview',
+      geoLevel: 15,
+      // maxGridNumber: CONFIG.maxGridNumber, //最大网格数，可选，默认为100000
+      // color: drawForm.color, //颜色(适用于：点、线、面、矩形)
+      // opacity: drawForm.opacity, //不透明度(适用于：点、线、面、矩形)
+      // width: drawForm.width,//尺寸(适用于：点、线)
+      fill: true,//是否填充内部(适用于：面、矩形),
+      outline: true,//外边线(适用于：面、矩形)
+      // outlineType: drawForm.lineType === '1' ? 'realLine' : 'dashLine',
+      // outlineWidth: drawForm.width,
+      // outlineColor: drawForm.outlineColor,//外边线颜色(适用于：点、面、矩形)
+      // height: 0,//底部高度(适用于：面)
+      // extrudedHeight: 0,//实体高度(适用于：面)
+      // material: drawForm.lineType === '1' || type === 'polygon' ? null : new gs3d.Cesium.PolylineDashMaterialProperty({
+      //   color: gs3d.Cesium.Color.fromCssColorString(drawForm.color).withAlpha(drawForm.opacity),
+      //   dashLength: 16.0
+      // }),
+      // isContinuous: type == 'multiPoint' ? true : false, //是否不连续点击，默认false，即默认连续点击(适用于：点)
+      showLabel: false,
+      clampToGround: true,
+    },
+  })
+}
 </script>
 
 <template>
@@ -125,7 +146,7 @@ const addModel = async () => {
   <div class="home" ref="homeref">
 
     <div id="mapContainer"></div>
-
+    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -157,7 +178,7 @@ const addModel = async () => {
     <!-- 视频监控 -->
     <Transition name="slide-fade3">
       <div class="left_wrapper_camera" v-if="store.state.showCamera">
-        <cameraStatistics></cameraStatistics>
+        <cameraStatistics :viewer="viewer"></cameraStatistics>
       </div>
     </Transition>
     <!-- 设备信息 -->
