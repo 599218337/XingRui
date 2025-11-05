@@ -37,17 +37,3 @@ router.beforeEach((to, from, next) => {
   next();
 });
 createApp(App).use(ElementPlus).use(useStore).use(router).mount('#app')
-
-declare global {
-  interface Window {
-    Cesium: any;
-    Earth: any;
-    earth: any;
-    viewer: any;
-    turf: any;
-    $: any;
-    $handler: any;
-    localViewer: any;
-    CONFIG:any
-  }
-}

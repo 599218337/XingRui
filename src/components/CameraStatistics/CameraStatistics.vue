@@ -13,7 +13,7 @@
         <span>视频监控统计</span>
       </div>
       <div class="content">
-        <div class="contentItem" v-for="(item, index) in store.state.cameraArray" @click="location(item)">
+        <div class="contentItem" v-for="item in cameraList" :key="item.id" @click="location(item)">
           <div class="Item">
             <div class="point" :style="{ background: item.status ? '#00FF7A' : '#FF1010' }"></div>
             <div class="text">{{ item.label }}</div>
@@ -58,19 +58,54 @@
     </div>
 
   </div>
-
+  <el-dialog v-model="videoDialog" width="80%" align-center :close-on-click-modal="false" @close="handleClosePreview">
+    <!-- 自定义 Loading 遮罩层 -->
+    <video id="video" controls autoplay muted></video>
+  </el-dialog>
 </template>
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted,nextTick } from 'vue'
 import { useStore } from "vuex";
+import * as gs3d from '/public/gs3d/index';
 const store = useStore();
 
 import emitter from '@/utils/bus'
 import axios from 'axios';
+import { cameraList } from './cameraList';
+import Hls from 'hls.js';
+const { viewer } = defineProps(['viewer'])
 
+const videoDialog = ref(false)
 onMounted(() => {
+  cameraList.forEach(item => gs3d.common.draw.drawGraphic(viewer, {
+    "type": "Point",
+    "coordinates": item.coord
+  }, {
+    showBillBoard: true,
+    billBoardOption: {
+      text: item.label,
+      url: '/src/assets/images/marker.svg'
+    },
+    graphicName: item.id,
+  }))
+
+  let handle = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+  handle.setInputAction(async function (e) {
+    let position = e.position
+    console.log('position：', position);
+    let pick = viewer.scene.pick(position)
+    console.log('pick[0].id：', pick[0]);
+    // if (pick[0].id.entityId) {
+    videoDialog.value = true
+    await nextTick()
+    getTestCamera()
+    // } else {
+    //   videoDialog.value = false
+    // }
+
+  }, gs3d.Cesium.ScreenSpaceEventType.LEFT_CLICK)
 })
 const showContent = ref(false)
 const showContentFuc = () => {
@@ -97,9 +132,7 @@ const location = (val) => {
     "covering_type": "poi",     //覆盖物类型, 详见下表
     "distance": 10           //距离(单位:米), 默认20米
   }
-  cloudRender.SuperAPI("FocusCovering", jsondata, (status) => {
-    console.log(status); //成功、失败回调
-  })
+
 }
 
 const showEdit1 = ref(false)
@@ -173,7 +206,16 @@ emitter.on('completeCamera', (val) => {
 // const transform = (type) => {
 //   emitter.emit('transform', type);
 // }
+const getTestCamera = () => {
+  if (Hls.isSupported()) {
+    var video = document.getElementById('video');
+    console.log('video',video)
 
+    var hls = new Hls();
+    hls.loadSource("http://10.32.10.65:83/openUrl/qE2rOF2/live.m3u8");
+    hls.attachMedia(video);
+  }
+}
 </script>
 
 <style lang="scss" scoped>
