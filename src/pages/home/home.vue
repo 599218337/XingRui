@@ -63,7 +63,7 @@ onMounted(async () => {
     msaaSamples: 4,
     infoBox: true,
     timeline: true,
-    terrain: Cesium.Terrain.fromWorldTerrain(),
+    // terrain: Cesium.Terrain.fromWorldTerrain(),
   };
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
 
@@ -81,7 +81,7 @@ onMounted(async () => {
 
   // 应用本地时间显示
   setupLocalTimeDisplay();
-  addFW()
+  await addAllModel()
 
 })
 
@@ -111,62 +111,106 @@ function setupLocalTimeDisplay() {
 const modelFlag = ref(false)
 
 
-
-
-const FWFlag = ref(false)
-const addFW = () => {
-  if (FWFlag.value) {
-    gs3d.manager.layerManager.removeLayer('building')
-    FWFlag.value = false
-    return
-  }
-  gs3d.manager.layerManager.addLayer({
-    id: 'building',
-    label: 'building',
+const addAllModel = async () => {
+  await gs3d.manager.layerManager.addLayer({
+    id: 'noWallBuild',
+    label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: 'Batchedxr_full/tileset.json',
+    url: '3dtileset_20251105/Batchedfw_part/tileset.json',
     setPosition: {
-      // lng: 117.05435995706138,
-      // lat: 36.674984212615854,
-      // height: -15,
+      height: -15,
     },
-    // rotate: {
-    //   x: 0,
-    //   y: 0,
-    //   z: -42,
-    // },
-    // scale: 1,
-    islocation: true,
   },
   )
 
-  // gs3d.manager.layerManager.addLayer({
-  //   id: 'noWall',
-  //   label: 'noWall',
-  //   type: 'model_3d_tiles',
-  //   url: 'building/part/tileset.json',
-  //   setPosition: {
-  //     // lng: 117.05435995706138,
-  //     // lat: 36.674984212615854,
-  //     // height: -15,
-  //   },
-  //   // rotate: {
-  //   //   x: 0,
-  //   //   y: 0,
-  //   //   z: -42,
-  //   // },
-  //   scale: 1,
-  //   // islocation: true,
-  //   alpha: 0
-  // },
-  // )
-  // gs3d.manager.layerManager.setLayerAlpha({
-  //   id: 'noWall',
-  //   alpha: 0
-  // })
-  console.log(' gs3d.manager.layerManager：', gs3d.manager.layerManager);
-  FWFlag.value = true
+
+  await gs3d.manager.layerManager.addLayer({
+    id: 'wall',
+    label: 'wall',
+    type: 'model_3d_tiles',
+    url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
+    setPosition: {
+      height: -15,
+    },
+    clampToGround: true,
+  },
+  )
+
+  await gs3d.manager.layerManager.addLayer({
+    id: 'jyPipe',
+    label: 'jyPipe',
+    type: 'model_3d_tiles',
+    url: '3dtileset_20251105/Batchedjy/tileset.json',
+    setPosition: {
+      height: -15,
+    },
+  },
+  )
+
+  await gs3d.manager.layerManager.addLayer({
+    id: 'lqPipe',
+    label: 'lqPipe',
+    type: 'model_3d_tiles',
+    url: '3dtileset_20251105/Batchedlq/tileset.json',
+    setPosition: {
+      height: -15,
+    },
+  },
+  )
+
+  await gs3d.manager.layerManager.addLayer({
+    id: 'qqPipe',
+    label: 'qqPipe',
+    type: 'model_3d_tiles',
+    url: '3dtileset_20251105/Batchedqq/tileset.json',
+    setPosition: {
+      height: -15,
+    },
+  },
+  )
+
+  await gs3d.manager.layerManager.addLayer({
+    id: 'ysPipe',
+    label: 'ysPipe',
+    type: 'model_3d_tiles',
+    url: '3dtileset_20251105/Batchedys/tileset.json',
+    setPosition: {
+      height: -15,
+    },
+  },
+  )
+  const noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
+  await noWallEntry.layer.tileSet.readyPromise
+  const boundingSphere = noWallEntry.layer.tileSet.boundingSphere
+  const center = boundingSphere.center;
+  const enuMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(center);
+  const eastOffset = new Cesium.Cartesian3(450, 530, 200); // 100 表示向东 100 米，按需改值
+  const destination = Cesium.Matrix4.multiplyByPoint(enuMatrix, eastOffset, new Cesium.Cartesian3());
+
+
+  const toTarget = Cesium.Cartesian3.subtract(center, destination, new Cesium.Cartesian3())
+  const inverseEnu = Cesium.Matrix4.inverse(enuMatrix, new Cesium.Matrix4())
+  const localToTarget = Cesium.Matrix4.multiplyByPointAsVector(
+    inverseEnu,
+    toTarget,
+    new Cesium.Cartesian3(),
+  )
+  const heading = Math.atan2(localToTarget.x, localToTarget.y)
+  const pitch = Math.atan2(localToTarget.z, Math.hypot(localToTarget.x, localToTarget.y))
+  viewer.value.camera.flyTo({
+    destination,
+    orientation: {
+      heading,
+      pitch,
+      roll: 0,
+    },
+    duration: 2,
+  })
 }
+
+
+
+
 
 const pickPoint = () => {
   const gridPickSearch = new gs3d.tools.areaFeaturePick({

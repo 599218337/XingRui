@@ -58,15 +58,18 @@
     </div>
 
   </div>
-  <el-dialog v-model="videoDialog" width="80%" align-center :close-on-click-modal="false" @close="handleClosePreview">
-    <!-- 自定义 Loading 遮罩层 -->
-    <video id="video" controls autoplay muted></video>
-  </el-dialog>
+  <div v-if="videoPopupVisible" class="camera-video-popup">
+    <div class="camera-video-popup__header">
+      <span>实时预览</span>
+      <button class="camera-video-popup__close" @click="closeVideoPopup"></button>
+    </div>
+    <video ref="videoEl" controls autoplay muted></video>
+  </div>
 </template>
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, watch, onMounted,nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useStore } from "vuex";
 import * as gs3d from '/public/gs3d/index';
 const store = useStore();
@@ -77,7 +80,31 @@ import { cameraList } from './cameraList';
 import Hls from 'hls.js';
 const { viewer } = defineProps(['viewer'])
 
-const videoDialog = ref(false)
+const videoPopupVisible = ref(false)
+const videoEl = ref(null)
+let hlsInstance = null
+let screenEventHandler = null
+
+const openVideoPopup = async () => {
+  videoPopupVisible.value = true
+  await nextTick()
+  getTestCamera()
+}
+
+const closeVideoPopup = () => {
+  videoPopupVisible.value = false
+  if (hlsInstance) {
+    hlsInstance.destroy()
+    hlsInstance = null
+  }
+  const video = videoEl.value
+  if (video) {
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+  }
+}
+
 onMounted(() => {
   cameraList.forEach(item => gs3d.common.draw.drawGraphic(viewer, {
     "type": "Point",
@@ -91,21 +118,27 @@ onMounted(() => {
     graphicName: item.id,
   }))
 
-  let handle = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
-  handle.setInputAction(async function (e) {
-    let position = e.position
-    console.log('position：', position);
+  screenEventHandler = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+  screenEventHandler.setInputAction(async function (e) {
+    const position = e.position
+    if (!position) {
+      closeVideoPopup()
+      return
+    }
     let pick = viewer.scene.pick(position)
-    console.log('pick[0].id：', pick[0]);
-    // if (pick[0].id.entityId) {
-    videoDialog.value = true
-    await nextTick()
-    getTestCamera()
-    // } else {
-    //   videoDialog.value = false
-    // }
-
+    if (!pick) {
+      closeVideoPopup()
+      return
+    }
+    await openVideoPopup()
   }, gs3d.Cesium.ScreenSpaceEventType.LEFT_CLICK)
+})
+onBeforeUnmount(() => {
+  if (screenEventHandler) {
+    screenEventHandler.destroy()
+    screenEventHandler = null
+  }
+  closeVideoPopup()
 })
 const showContent = ref(false)
 const showContentFuc = () => {
@@ -208,12 +241,22 @@ emitter.on('completeCamera', (val) => {
 // }
 const getTestCamera = () => {
   if (Hls.isSupported()) {
-    var video = document.getElementById('video');
-    console.log('video',video)
-
-    var hls = new Hls();
+    if (hlsInstance) {
+      hlsInstance.destroy()
+      hlsInstance = null
+    }
+    const video = videoEl.value
+    if (!video) return
+    const hls = new Hls();
     hls.loadSource("http://10.32.10.65:83/openUrl/qE2rOF2/live.m3u8");
     hls.attachMedia(video);
+    hlsInstance = hls
+  } else {
+    const video = videoEl.value
+    if (video && video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = "http://10.32.10.65:83/openUrl/qE2rOF2/live.m3u8";
+      video.play()
+    }
   }
 }
 </script>

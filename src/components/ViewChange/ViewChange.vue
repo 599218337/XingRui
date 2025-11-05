@@ -25,123 +25,52 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 
 import { ElMessage } from 'element-plus'
 import * as gs3d from '/public/gs3d/index';
 const showView = ref(false)
+let noWallEntry, jyPipeEntry, lqPipeEntry, qqPipeEntry, ysPipeEntry, buildingEntry
+
 const viewShow = () => {
   showView.value = !showView.value
+  if (!noWallEntry) {
+    noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
+  }
+  if (!jyPipeEntry) {
+    jyPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'jyPipe')
+  }
+  if (!lqPipeEntry) {
+    lqPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'lqPipe')
+  }
+  if (!qqPipeEntry) {
+    qqPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'qqPipe')
+  }
+  if (!ysPipeEntry) {
+    ysPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'ysPipe')
+  }
+  if (!buildingEntry) {
+    buildingEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'wall')
+  }
 }
+
 const viewChange = (type) => {
-  let layerConfig
 
   switch (type) {
     case 1:
-      layerConfig = {
-        id: 'detail1',
-        label: 'detail1',
-        type: 'model_3d_tiles',
-        url: 'detailModel/Batchedgx_jy/tileset.json',
-        setPosition: {
-          // lng: 117.05435995706138,
-          // lat: 36.674984212615854,
-          // height: -5,
-        },
-        // rotate: {
-        //   x: 0,
-        //   y: 0,
-        //   z: -42,
-        // },
-        scale: 1,
-        // islocation: true,
-      }
-      toggleModel(layerConfig)
+      jyPipeEntry.layer.tileSet.show = !jyPipeEntry.layer.tileSet.show
       break;
     case 2:
-      layerConfig = {
-        id: 'detail2',
-        label: 'detail2',
-        type: 'model_3d_tiles',
-        url: 'detailModel/Batchedgx_lq/tileset.json',
-        setPosition: {
-          // lng: 117.05435995706138,
-          // lat: 36.674984212615854,
-          // height: -5,
-        },
-        // rotate: {
-        //   x: 0,
-        //   y: 0,
-        //   z: -42,
-        // },
-        scale: 1,
-        // islocation: true,
-      },
-        toggleModel(layerConfig)
+      lqPipeEntry.layer.tileSet.show = !lqPipeEntry.layer.tileSet.show
       break;
     case 3:
-      layerConfig = {
-        id: 'detail3',
-        label: 'detail3',
-        type: 'model_3d_tiles',
-        url: 'detailModel/Batchedgx_qq/tileset.json',
-        setPosition: {
-          // lng: 117.05435995706138,
-          // lat: 36.674984212615854,
-          // height: -5,
-        },
-        // rotate: {
-        //   x: 0,
-        //   y: 0,
-        //   z: -42,
-        // },
-        scale: 1,
-        // islocation: true,
-      },
-        toggleModel(layerConfig)
+      qqPipeEntry.layer.tileSet.show = !qqPipeEntry.layer.tileSet.show
       break;
     case 4:
-      layerConfig = {
-        id: 'detail4',
-        label: 'detail4',
-        type: 'model_3d_tiles',
-        url: 'detailModel/Batchedgx_ys/tileset.json',
-        setPosition: {
-          // lng: 117.05435995706138,
-          // lat: 36.674984212615854,
-          // height: -5,
-        },
-        // rotate: {
-        //   x: 0,
-        //   y: 0,
-        //   z: -42,
-        // },
-        scale: 1,
-        // islocation: true,
-      },
-        toggleModel(layerConfig)
+      ysPipeEntry.layer.tileSet.show = !ysPipeEntry.layer.tileSet.show
       break;
     case 5:
-      gs3d.manager.layerManager.removeLayer('building')
-      gs3d.manager.layerManager.addLayer({
-        id: 'noWall',
-        label: 'noWall',
-        type: 'model_3d_tiles',
-        url: 'building/part/tileset.json',
-        setPosition: {
-          // lng: 117.05435995706138,
-          // lat: 36.674984212615854,
-          // height: -15,
-        },
-        // rotate: {
-        //   x: 0,
-        //   y: 0,
-        //   z: -42,
-        // },
-        scale: 1,
-        // islocation: true,
-        alpha: 0
-      })
+      buildingEntry.layer.tileSet.show = !buildingEntry.layer.tileSet.show
       break;
     default:
       break;
@@ -154,9 +83,7 @@ const activeKey = () => {
 const unActiveKey = () => {
   cloudRender.SuperAPI("removekeyboard");
 }
-const toggleModel = (config) => {
-  gs3d.manager.layerManager.addLayer(config)
-}
+
 const viewChange2 = () => {
   let walkJson = {
     "reset_attitude": true,       //true: 使用当前自定义字段限制; false: 使用当前相机的默认参数以及限制
