@@ -66,7 +66,7 @@
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted,nextTick } from 'vue'
 import { useStore } from "vuex";
 import * as gs3d from '/public/gs3d/index';
 const store = useStore();
@@ -74,6 +74,7 @@ const store = useStore();
 import emitter from '@/utils/bus'
 import axios from 'axios';
 import { cameraList } from './cameraList';
+import Hls from 'hls.js';
 const { viewer } = defineProps(['viewer'])
 
 const videoDialog = ref(false)
@@ -91,14 +92,15 @@ onMounted(() => {
   }))
 
   let handle = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
-  handle.setInputAction(function (e) {
+  handle.setInputAction(async function (e) {
     let position = e.position
     console.log('position：', position);
     let pick = viewer.scene.pick(position)
     console.log('pick[0].id：', pick[0]);
     // if (pick[0].id.entityId) {
     videoDialog.value = true
-
+    await nextTick()
+    getTestCamera()
     // } else {
     //   videoDialog.value = false
     // }
@@ -204,7 +206,16 @@ emitter.on('completeCamera', (val) => {
 // const transform = (type) => {
 //   emitter.emit('transform', type);
 // }
+const getTestCamera = () => {
+  if (Hls.isSupported()) {
+    var video = document.getElementById('video');
+    console.log('video',video)
 
+    var hls = new Hls();
+    hls.loadSource("http://10.32.10.65:83/openUrl/qE2rOF2/live.m3u8");
+    hls.attachMedia(video);
+  }
+}
 </script>
 
 <style lang="scss" scoped>

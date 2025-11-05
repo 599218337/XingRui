@@ -52,7 +52,6 @@ watch(() => store.state.showAside, (val) => {
   document.getElementById('map_tool').style.transition = `transform ${t}s`
 })
 
-
 onMounted(async () => {
   getScale()
   // window.addEventListener('resize', getScale);
@@ -82,7 +81,6 @@ onMounted(async () => {
 
   // 应用本地时间显示
   setupLocalTimeDisplay();
-  // addModel()
   addFW()
 
 })
@@ -111,34 +109,6 @@ function setupLocalTimeDisplay() {
 }
 
 const modelFlag = ref(false)
-const addModel = async () => {
-  if (modelFlag.value) {
-    gs3d.manager.layerManager.removeLayer('model')
-    modelFlag.value = false
-    return
-  }
-  gs3d.manager.layerManager.addLayer(
-    {
-      id: 'model',
-      label: 'model',
-      type: 'model_3d_tiles',
-      url: 'model/tileset2.json',
-      setPosition: {
-        // lng: 117.05435995706138,
-        // lat: 36.674984212615854,
-        height: -15,
-      },
-      rotate: {
-        x: 0,
-        y: 0,
-        z: -42,
-      },
-      scale: 1,
-      islocation: true,
-    },
-  )
-  modelFlag.value = true
-}
 
 
 
