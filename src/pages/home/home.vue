@@ -14,7 +14,7 @@ import {
   personStatistics,
   viewChange,
 } from '@/components';
-import * as gs3d from '../../../public/gs3d/index';
+import * as gs3d from '/public/gs3d/index';
 import { onMounted, ref, reactive, watch } from 'vue'
 import { useStore } from "vuex";
 
@@ -55,24 +55,68 @@ watch(() => store.state.showAside, (val) => {
 
 onMounted(async () => {
   getScale()
-  window.addEventListener('resize', getScale);
+  // window.addEventListener('resize', getScale);
   timer = setInterval(() => {
     time.value = utils.dateFormat(new Date(), 'hh:mm:ss');
   }, 1000);
 
   const defopt = {
     msaaSamples: 4,
-    infoBox: true
-    // terrain: Cesium.Terrain.fromWorldTerrain(),
+    infoBox: true,
+    timeline: true,
+    terrain: Cesium.Terrain.fromWorldTerrain(),
   };
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
-  addModel()
+
+  // 将 Cesium 的时钟设置为系统时钟模式
+  viewer.value.clock.shouldAnimate = true;
+  viewer.value.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;
+  const now = Cesium.JulianDate.fromDate(new Date());
+  viewer.value.clock.currentTime = now;
+  viewer.value.clock.startTime = Cesium.JulianDate.addHours(now, -12, new Cesium.JulianDate());
+  viewer.value.clock.stopTime = Cesium.JulianDate.addHours(now, 12, new Cesium.JulianDate());
+
+  if (viewer.value.timeline) {
+    viewer.value.timeline.zoomTo(viewer.value.clock.startTime, viewer.value.clock.stopTime);
+  }
+
+  // 应用本地时间显示
+  setupLocalTimeDisplay();
+  // addModel()
+  addFW()
 
 })
 
+function setupLocalTimeDisplay() {
+
+  if (viewer.value.timeline) {
+    viewer.value.timeline.makeLabel = function (date) {
+      const jsDate = Cesium.JulianDate.toDate(date);
+
+      const year = jsDate.getFullYear();
+      const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+      const day = String(jsDate.getDate()).padStart(2, '0');
+      const hours = String(jsDate.getHours()).padStart(2, '0');
+      const minutes = String(jsDate.getMinutes()).padStart(2, '0');
+      const seconds = String(jsDate.getSeconds()).padStart(2, '0');
+
+      return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    // 刷新时间轴
+    viewer.value.timeline.zoomTo(viewer.value.clock.startTime, viewer.value.clock.stopTime);
+
+  }
+
+}
+
+const modelFlag = ref(false)
 const addModel = async () => {
-
-
+  if (modelFlag.value) {
+    gs3d.manager.layerManager.removeLayer('model')
+    modelFlag.value = false
+    return
+  }
   gs3d.manager.layerManager.addLayer(
     {
       id: 'model',
@@ -82,7 +126,7 @@ const addModel = async () => {
       setPosition: {
         // lng: 117.05435995706138,
         // lat: 36.674984212615854,
-        height: -10,
+        height: -15,
       },
       rotate: {
         x: 0,
@@ -93,8 +137,66 @@ const addModel = async () => {
       islocation: true,
     },
   )
+  modelFlag.value = true
 }
 
+
+
+
+const FWFlag = ref(false)
+const addFW = () => {
+  if (FWFlag.value) {
+    gs3d.manager.layerManager.removeLayer('building')
+    FWFlag.value = false
+    return
+  }
+  gs3d.manager.layerManager.addLayer({
+    id: 'building',
+    label: 'building',
+    type: 'model_3d_tiles',
+    url: 'Batchedxr_full/tileset.json',
+    setPosition: {
+      // lng: 117.05435995706138,
+      // lat: 36.674984212615854,
+      // height: -15,
+    },
+    // rotate: {
+    //   x: 0,
+    //   y: 0,
+    //   z: -42,
+    // },
+    // scale: 1,
+    islocation: true,
+  },
+  )
+
+  // gs3d.manager.layerManager.addLayer({
+  //   id: 'noWall',
+  //   label: 'noWall',
+  //   type: 'model_3d_tiles',
+  //   url: 'building/part/tileset.json',
+  //   setPosition: {
+  //     // lng: 117.05435995706138,
+  //     // lat: 36.674984212615854,
+  //     // height: -15,
+  //   },
+  //   // rotate: {
+  //   //   x: 0,
+  //   //   y: 0,
+  //   //   z: -42,
+  //   // },
+  //   scale: 1,
+  //   // islocation: true,
+  //   alpha: 0
+  // },
+  // )
+  // gs3d.manager.layerManager.setLayerAlpha({
+  //   id: 'noWall',
+  //   alpha: 0
+  // })
+  console.log(' gs3d.manager.layerManager：', gs3d.manager.layerManager);
+  FWFlag.value = true
+}
 
 const pickPoint = () => {
   const gridPickSearch = new gs3d.tools.areaFeaturePick({
@@ -142,11 +244,11 @@ const pickPoint = () => {
 </script>
 
 <template>
+  <div id="mapContainer"></div>
 
   <div class="home" ref="homeref">
 
-    <div id="mapContainer"></div>
-    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
+    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -200,13 +302,15 @@ const pickPoint = () => {
       </div>
     </Transition>
     <footerNav></footerNav>
+
   </div>
 </template>
 
 <style lang="scss" scoped>
 #mapContainer {
-  width: 1920px;
-  height: 1080px;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
 }
 
 @font-face {
@@ -236,8 +340,13 @@ const pickPoint = () => {
   transform-origin: 0 0;
   left: 50%;
   top: 50%;
+  pointer-events: none;
   transition: 0.3s;
   transform: scale(var(--scaleX), var(--scaleY));
+}
+
+.home>* {
+  pointer-events: auto;
 }
 
 
@@ -353,5 +462,9 @@ const pickPoint = () => {
   .btn2:hover:hover {
     color: #0085F5;
   }
+}
+
+:deep(.cesium-viewer-timelineContainer) {
+  z-index: 9999;
 }
 </style>

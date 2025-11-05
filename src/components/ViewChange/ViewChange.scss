@@ -10,7 +10,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-
+z-index: 2;
   .text {
     width: 24px;
     font-size: 12px;
@@ -59,7 +59,14 @@
   height: 46px;
   display: inline-flex;
 }
-
+.viewContent3 {
+  position: absolute;
+  right: 50px;
+  top: 22px;
+  width: 46px;
+  height: 113px;
+  display: block;
+}
 .view1,
 .view2,
 .view3,
@@ -73,7 +80,7 @@
 
 .view1 {
   margin-bottom: 21px;
-  background: url("/image/buildingWall.png");
+  background: url("/image/JYPipe.png");
   background-size: 100% 100%;
 }
 
@@ -94,6 +101,6 @@
 }
 
 .view5 {
-  background: url("/image/view4.png");
+  background: url("/image/buildingWall.png");
   background-size: 100% 100%;
 }
