@@ -58,7 +58,8 @@
     </div>
 
   </div>
-  <div v-if="videoPopupVisible" class="camera-video-popup">
+  <div v-if="videoPopupVisible" class="camera-video-popup"
+    :style="{ top: popupPosition.y + 'px', left: popupPosition.x + 'px', transform: 'none' }">
     <div class="camera-video-popup__header">
       <span>实时预览</span>
       <button class="camera-video-popup__close" @click="closeVideoPopup"></button>
@@ -82,10 +83,26 @@ const { viewer } = defineProps(['viewer'])
 
 const videoPopupVisible = ref(false)
 const videoEl = ref(null)
+const popupPosition = ref({ x: 0, y: 0 })
 let hlsInstance = null
 let screenEventHandler = null
 
-const openVideoPopup = async () => {
+let postRender = null
+
+const openVideoPopup = async (entity) => {
+  if (entity) {
+    postRender = viewer.scene.postRender.addEventListener(() => {
+      const cartesian = entity.id._position.getValue()
+      const windowPosition = gs3d.Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, cartesian)
+      const scaleX = window.innerWidth / 1920
+      const scaleY = window.innerHeight / 1080
+      windowPosition
+        && (popupPosition.value = {
+          x: windowPosition.x / scaleX + 20,
+          y: windowPosition.y / scaleY - 200,
+        })
+    })
+  }
   videoPopupVisible.value = true
   await nextTick()
   getTestCamera()
@@ -115,7 +132,7 @@ onMounted(() => {
       text: item.label,
       url: '/src/assets/images/marker.svg'
     },
-    graphicName: item.id,
+    graphicName: 'camera' + item.id,
   }))
 
   screenEventHandler = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
@@ -126,11 +143,12 @@ onMounted(() => {
       return
     }
     let pick = viewer.scene.pick(position)
+    console.log('pick：', pick);
     if (!pick) {
       closeVideoPopup()
       return
     }
-    await openVideoPopup()
+    await openVideoPopup(pick)
   }, gs3d.Cesium.ScreenSpaceEventType.LEFT_CLICK)
 })
 onBeforeUnmount(() => {
