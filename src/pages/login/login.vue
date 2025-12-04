@@ -3,7 +3,7 @@
     <div class="ray">
       <img src="/public/image/ray.svg" width="100%" height="1005">
     </div>
-    <div class="title">兴瑞数字孪生平台</div>
+    <div class="title">兴瑞硅材料数字孪生平台</div>
     <div class="content">
       <div class="formTitle">
         <div class="line"></div>
