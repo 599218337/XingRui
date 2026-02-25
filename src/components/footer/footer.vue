@@ -169,6 +169,8 @@ const removeCustomPOI = () => {
   }
   cloudRender.SuperAPI("RemoveAllCovering", jsondata)
 }
+
+changeBtn(0)
 </script>
 
 <style lang="scss" scoped>

@@ -40,12 +40,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useStore } from "vuex";
 const store = useStore();
 import { ElMessage } from 'element-plus';
 import * as gs3d from '../../../public/gs3d/index';
-
+const { viewer } = defineProps(['viewer'])
 
 
 const getPersonApiToken = async () => {
@@ -70,6 +70,27 @@ const getPersonApiToken = async () => {
   return token;
 }
 
+// 判断点是否在多边形内（射线法）
+const PERSON_AREA_POLYGON = [
+  [111.41098823911135, 30.555326852157116],
+  [111.40965179382539, 30.556139759665626],
+  [111.40775444349205, 30.55431860799904],
+  [111.4092221018413, 30.55322451754084],
+  [111.41098823911135, 30.555326852157116],
+]
+const isPointInPolygon = (lon, lat, polygon) => {
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1]
+    const xj = polygon[j][0], yj = polygon[j][1]
+    const intersect = ((yi > lat) !== (yj > lat)) &&
+      (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
+
 const getPersonList = async (token) => {
   let personList;
   await fetch('/people-locate/api/v2/person/realTimeData', {
@@ -84,22 +105,11 @@ const getPersonList = async (token) => {
     }
     return res.json()
   }).then(json => {
-    console.log('json', json)
     personList = json.data
     personList = personList.reduce((pre, cur) => {
-      // 模型范围（tileset.json region 弧度转度）
-      const MODEL_BOUNDS = {
-        minLon: 1.9444325457217007 * 180 / Math.PI, // ≈111.395°
-        maxLon: 1.9444888040614945 * 180 / Math.PI, // ≈111.428°
-        minLat: 0.5332543510337707 * 180 / Math.PI, // ≈30.548°
-        maxLat: 0.5333045603717707 * 180 / Math.PI, // ≈30.551°
-      }
       const lon = Number(cur.longitude)
       const lat = Number(cur.latitude)
-      if (
-        lon >= MODEL_BOUNDS.minLon && lon <= MODEL_BOUNDS.maxLon &&
-        lat >= MODEL_BOUNDS.minLat && lat <= MODEL_BOUNDS.maxLat
-      ) {
+      if (isPointInPolygon(lon, lat, PERSON_AREA_POLYGON)) {
         showAllPerson(cur)
         if (!pre.has(cur.department)) {
           pre.set(cur.department, [{ department: cur.department, empNo: cur.empNo, empName: cur.empName, islxsign: cur.islxsign, specifictype: cur.specifictype, tel: cur.tel, worktypename: cur.worktypename, latitude: cur.latitude, longitude: cur.longitude, layer: cur.layer }])
@@ -118,15 +128,11 @@ const activeName = ref();
 const departTypeList = ref([])
 onMounted(async () => {
   let peopleApiToken = await getPersonApiToken()
-  console.log('peopleApiToken', peopleApiToken)
   peopleList.value = await getPersonList(peopleApiToken)
-  console.log('peopleList', peopleList.value)
   activeName.value = [...peopleList.value.keys()][0]
-  console.log(' activeName.value', activeName.value)
   Array.from(peopleList.value.values()).forEach(element => {
     departTypeList.value.push({ label: element[0].department, value: element[0].department, detailPeople: element })
   });
-  console.log('departTypeList', departTypeList.value)
 })
 
 const billBoardOption = (name) => {
@@ -149,14 +155,15 @@ const billBoardOption = (name) => {
 }
 
 const showAllPerson = (person) => {
-  gs3d.common.draw.drawGraphic(window.viewer, {
+  gs3d.common.draw.drawGraphic(viewer, {
     "type": "Point",
     "coordinates": [person.longitude, person.latitude, person.layer]
   }, {
+    graphicName: 'person_',
     entityId: 'person_' + person.empName,
     billBoardOption: billBoardOption(person.empName),
     entityProperties: {
-      deviceType: 'camera',
+      deviceType: 'person',
       floor: 1,
     }
   })
@@ -193,6 +200,9 @@ const location = (val) => {
   })
 }
 
+onUnmounted(() => {
+  gs3d.common.draw.clearGraphicByGraphicName(viewer, 'person_')
+})
 </script>
 
 <style lang="scss" scoped>

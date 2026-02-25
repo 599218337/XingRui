@@ -312,7 +312,7 @@ const pickPoint = () => {
     <!-- 人员巡视 -->
     <Transition name="slide-fade3">
       <div class="left_wrapper_camera" v-if="store.state.showPerson">
-        <personStatistics></personStatistics>
+        <personStatistics :viewer="viewer"></personStatistics>
       </div>
     </Transition>
     <footerNav></footerNav>
