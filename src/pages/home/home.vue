@@ -63,6 +63,7 @@ onMounted(async () => {
     msaaSamples: 4,
     infoBox: true,
     timeline: true,
+    // useImageryLayers: false,
     // terrain: Cesium.Terrain.fromWorldTerrain(),
   };
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
@@ -108,17 +109,24 @@ function setupLocalTimeDisplay() {
 
 }
 
-const modelFlag = ref(false)
 
 
 const addAllModel = async () => {
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'noWallBuild',
+  //   label: 'noWallBuild',
+  //   type: 'model_3d_tiles',
+  //   url: 'modelTest/tileset.json',
+  // },
+  // )
   await gs3d.manager.layerManager.addLayer({
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedfw_part/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
   },
   )
@@ -130,7 +138,8 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
     clampToGround: true,
   },
@@ -142,7 +151,8 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedjy/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
   },
   )
@@ -153,7 +163,8 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedlq/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
   },
   )
@@ -164,7 +175,8 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedqq/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
   },
   )
@@ -175,7 +187,8 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedys/tileset.json',
     setPosition: {
-      height: -15,
+      height: -14,
+      // height: 0,
     },
   },
   )
@@ -262,7 +275,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref">
 
-    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
+    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -348,12 +361,12 @@ const pickPoint = () => {
 }
 
 .home {
-  // position: absolute;
+  position: absolute;
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
-  left: 50%;
-  top: 50%;
+  left: 0;
+  top: 0;
   pointer-events: none;
   transition: 0.3s;
   transform: scale(var(--scaleX), var(--scaleY));

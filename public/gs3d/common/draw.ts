@@ -248,7 +248,7 @@ gs3d.common.draw.drawGraphic(viewer, geometry, option)
     entityId = entityId || common.getUuid(10)
     let coordArray: Array<any> = []
     geometry.coordinates.forEach((item: any) => {
-      item.forEach((i:number)=>{
+      item.forEach((i: number) => {
         coordArray.push(i)
       })
     })
@@ -262,11 +262,11 @@ gs3d.common.draw.drawGraphic(viewer, geometry, option)
     } else {
       material = option.color ? Cesium.Color.fromCssColorString(option.color) : Cesium.Color.RED
     }
-    let polylineOption: any ={
-        positions:  geometry.coordinates[0]?.length==3?Cesium.Cartesian3.fromDegreesArrayHeights(coordArray):Cesium.Cartesian3.fromDegreesArray(coordArray),
-        width: option.width ? parseInt(option.width) : 5,
-        material: material,
-      }
+    let polylineOption: any = {
+      positions: geometry.coordinates[0]?.length == 3 ? Cesium.Cartesian3.fromDegreesArrayHeights(coordArray) : Cesium.Cartesian3.fromDegreesArray(coordArray),
+      width: option.width ? parseInt(option.width) : 5,
+      material: material,
+    }
     if (option.clampToGround) {
       polylineOption.clampToGround = true;
     }
@@ -397,21 +397,21 @@ gs3d.common.draw.drawGraphic(viewer, geometry, option)
     return ramp
   }
   //绘制墙
-  const  drawWall = (viewer: any, geometry: any, option: any, holes: any, entityId?: string) => {
+  const drawWall = (viewer: any, geometry: any, option: any, holes: any, entityId?: string) => {
     entityId = entityId || common.getUuid(10)
-    let { maximumHeights, minimumHeights,clampToGround } = option.wallOption || {}
+    let { maximumHeights, minimumHeights, clampToGround } = option.wallOption || {}
     let coordinates: Array<any> = []
     let length = geometry.coordinates[0].length
-    let maximumHeight:Array<any> = new Array(length).fill(maximumHeights || 50)
-    let minimumHeight:Array<any> = new Array(length).fill(minimumHeights || 0)
+    let maximumHeight: Array<any> = new Array(length).fill(maximumHeights || 50)
+    let minimumHeight: Array<any> = new Array(length).fill(minimumHeights || 0)
     var rgba = option.color ? Cesium.Color.fromCssColorString(option.color) : Cesium.Color.fromCssColorString('#00FF33')
 
-    let cartesians: Array<any>=[]
+    let cartesians: Array<any> = []
 
     geometry.coordinates.forEach((item: Array<any>, index: number) => {
       item.forEach((coord: Array<any>) => {
         cartesians.push(Cesium.Cartographic.fromDegrees(coord[0], coord[1], 0))
-        coord.forEach((i:number)=>{
+        coord.forEach((i: number) => {
           coordinates.push(i)
           // coordinates.push(coord[0])
           // coordinates.push(coord[1])
@@ -432,7 +432,7 @@ gs3d.common.draw.drawGraphic(viewer, geometry, option)
     //     });
     //   }
     // }
-    
+
     var entity = viewer.entities.add({
       wall: {
         // hierarchy:{
@@ -476,7 +476,7 @@ gs3d.common.draw.drawGraphic(viewer, geometry, option)
     entity.entityProperties = option.entityProperties //entityProperties
     return entity
   }
-  
+
   //绘制billboard
   const drawBillBoard = (viewer: any, geometry: any, option: any, entityId?: string, entity?: any) => {
     entityId = entityId || common.getUuid(10)
