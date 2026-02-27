@@ -303,6 +303,10 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   z-index: 20;
 
+  &--dual {
+    height: 460px;
+  }
+
   video {
     flex: 1;
     width: 100%;
@@ -310,6 +314,30 @@
     background: #000;
     outline: none;
   }
+}
+
+.camera-video-popup__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.camera-video-popup__video-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.camera-video-popup__video-label {
+  font-size: 12px;
+  color: #9ccfff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .camera-video-popup__header {

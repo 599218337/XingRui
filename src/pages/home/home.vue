@@ -15,11 +15,31 @@ import {
   viewChange,
 } from '@/components';
 import * as gs3d from '/public/gs3d/index';
-import { onMounted, ref, reactive, watch } from 'vue'
+import { onMounted, onUnmounted, ref, reactive, watch } from 'vue'
 import { useStore } from "vuex";
 
 import utils from '@/utils/utils'
+import { applyShaderEffect, removeShaderEffect } from '@/utils/shaderEffects'
 const time = ref('')
+const activeEffect = ref<'fresnel' | 'xray' | null>(null)
+
+// 所有 3D Tiles 的 ID
+const allTilesetIds = ['noWallBuild', 'wall', 'jyPipe', 'lqPipe', 'qqPipe', 'ysPipe']
+
+const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
+  if (activeEffect.value === effectType) {
+    // 当前效果已激活，关闭它
+    removeShaderEffect(allTilesetIds)
+    activeEffect.value = null
+  } else {
+    // 先移除旧效果，再应用新效果
+    if (activeEffect.value) {
+      removeShaderEffect(allTilesetIds)
+    }
+    applyShaderEffect(allTilesetIds, effectType)
+    activeEffect.value = effectType
+  }
+}
 let timer = null
 const store = useStore();
 const { Cesium } = gs3d
@@ -54,7 +74,7 @@ watch(() => store.state.showAside, (val) => {
 
 onMounted(async () => {
   getScale()
-  // window.addEventListener('resize', getScale);
+  window.addEventListener('resize', getScale);
   timer = setInterval(() => {
     time.value = utils.dateFormat(new Date(), 'hh:mm:ss');
   }, 1000);
@@ -67,6 +87,22 @@ onMounted(async () => {
     // terrain: Cesium.Terrain.fromWorldTerrain(),
   };
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
+
+  // 移除底图，设置深蓝色背景
+  viewer.value.imageryLayers.removeAll();
+  viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1628');
+  viewer.value.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628');
+  // 关闭天空盒和大气效果，使用纯色背景
+  viewer.value.scene.skyBox.show = false;
+  viewer.value.scene.skyAtmosphere.show = false;
+
+  // 开启 SSAO 环境光遮蔽
+  viewer.value.scene.postProcessStages.ambientOcclusion.enabled = true;
+  viewer.value.scene.postProcessStages.ambientOcclusion.uniforms.intensity = 0.5;
+  viewer.value.scene.postProcessStages.ambientOcclusion.uniforms.bias = 0.1;
+  viewer.value.scene.postProcessStages.ambientOcclusion.uniforms.lengthCap = 0.03;
+  viewer.value.scene.postProcessStages.ambientOcclusion.uniforms.stepSize = 1.0;
+  viewer.value.scene.postProcessStages.ambientOcclusion.uniforms.blurStepSize = 0.86;
 
   // 将 Cesium 的时钟设置为系统时钟模式
   viewer.value.clock.shouldAnimate = true;
@@ -84,6 +120,11 @@ onMounted(async () => {
   setupLocalTimeDisplay();
   await addAllModel()
 
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', getScale)
+  if (timer) clearInterval(timer)
 })
 
 function setupLocalTimeDisplay() {
@@ -125,7 +166,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedfw_part/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
   },
@@ -138,7 +179,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
     clampToGround: true,
@@ -151,7 +192,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedjy/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
   },
@@ -163,7 +204,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedlq/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
   },
@@ -175,7 +216,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedqq/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
   },
@@ -187,7 +228,7 @@ const addAllModel = async () => {
     type: 'model_3d_tiles',
     url: '3dtileset_20251105/Batchedys/tileset.json',
     setPosition: {
-      height: -14,
+      height: -13,
       // height: 0,
     },
   },
@@ -197,7 +238,7 @@ const addAllModel = async () => {
   const boundingSphere = noWallEntry.layer.tileSet.boundingSphere
   const center = boundingSphere.center;
   const enuMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(center);
-  const eastOffset = new Cesium.Cartesian3(450, 530, 200); // 100 表示向东 100 米，按需改值
+  const eastOffset = new Cesium.Cartesian3(280, -210, 220); // 相机在东南方，朝向西北，靠近目标
   const destination = Cesium.Matrix4.multiplyByPoint(enuMatrix, eastOffset, new Cesium.Cartesian3());
 
 
@@ -276,6 +317,17 @@ const pickPoint = () => {
   <div class="home" ref="homeref">
 
     <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
+    <!-- Shader 特效按钮组 -->
+    <div class="shader-btn-group">
+      <!-- <button class="shader-btn" :class="{ active: activeEffect === 'fresnel' }" @click="toggleShaderEffect('fresnel')">
+        <span class="shader-btn-icon">✦</span>
+        Fresnel 发光
+      </button> -->
+      <button class="shader-btn" :class="{ active: activeEffect === 'xray' }" @click="toggleShaderEffect('xray')">
+        <span class="shader-btn-icon">☢</span>
+        网格透视
+      </button>
+    </div>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -364,12 +416,12 @@ const pickPoint = () => {
   position: absolute;
   width: 1920px;
   height: 1080px;
-  transform-origin: 0 0;
-  left: 0;
-  top: 0;
+  transform-origin: center center;
+  left: 50%;
+  top: 50%;
   pointer-events: none;
   transition: 0.3s;
-  transform: scale(var(--scaleX), var(--scaleY));
+  transform: translate(-50%, -50%) scale(var(--scaleX), var(--scaleY));
 }
 
 .home>* {
@@ -493,5 +545,49 @@ const pickPoint = () => {
 
 :deep(.cesium-viewer-timelineContainer) {
   z-index: 9999;
+}
+
+.shader-btn-group {
+  position: absolute;
+  top: 100px;
+  left: 280px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+.shader-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid rgba(100, 180, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(10, 22, 40, 0.75);
+  backdrop-filter: blur(8px);
+  color: #8ec8f6;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  pointer-events: auto;
+}
+
+.shader-btn:hover {
+  border-color: rgba(100, 180, 255, 0.6);
+  background: rgba(20, 50, 90, 0.85);
+  color: #b8e0ff;
+  box-shadow: 0 0 12px rgba(80, 160, 255, 0.25);
+}
+
+.shader-btn.active {
+  border-color: rgba(80, 200, 255, 0.8);
+  background: linear-gradient(135deg, rgba(20, 60, 120, 0.9), rgba(10, 40, 80, 0.9));
+  color: #fff;
+  box-shadow: 0 0 18px rgba(80, 200, 255, 0.35), inset 0 0 12px rgba(80, 200, 255, 0.1);
+}
+
+.shader-btn-icon {
+  font-size: 16px;
 }
 </style>

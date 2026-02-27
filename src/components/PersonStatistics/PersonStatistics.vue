@@ -159,7 +159,6 @@ const showAllPerson = (person) => {
     "type": "Point",
     "coordinates": [person.longitude, person.latitude, person.layer]
   }, {
-    graphicName: 'person_',
     entityId: 'person_' + person.empName,
     billBoardOption: billBoardOption(person.empName),
     entityProperties: {
@@ -201,7 +200,7 @@ const location = (val) => {
 }
 
 onUnmounted(() => {
-  gs3d.common.draw.clearGraphicByGraphicName(viewer, 'person_')
+  gs3d.common.draw.clearAllGraphic(viewer)
 })
 </script>
 

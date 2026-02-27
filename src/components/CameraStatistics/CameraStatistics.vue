@@ -85,12 +85,22 @@
 
   </div>
   <div v-if="videoPopupVisible" class="camera-video-popup"
+    :class="{ 'camera-video-popup--dual': !!currentSubCameraLabel }"
     :style="{ top: popupPosition.y + 'px', left: popupPosition.x + 'px', transform: 'none' }">
     <div class="camera-video-popup__header">
-      <span>{{ currentCameraLabel || '实时预览' }}</span>
+      <span v-if="!currentSubCameraLabel">{{ currentCameraLabel || '实时预览' }}</span>
       <button class="camera-video-popup__close" @click="closeVideoPopup"></button>
     </div>
-    <video ref="videoEl" controls autoplay muted></video>
+    <div class="camera-video-popup__body">
+      <div class="camera-video-popup__video-item">
+        <div class="camera-video-popup__video-label" v-if="currentSubCameraLabel">{{ currentCameraLabel }}</div>
+        <video ref="videoEl" controls autoplay muted></video>
+      </div>
+      <div class="camera-video-popup__video-item" v-if="currentSubCameraLabel">
+        <div class="camera-video-popup__video-label">{{ currentSubCameraLabel }}</div>
+        <video ref="videoEl2" controls autoplay muted></video>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -132,15 +142,19 @@ const { viewer } = defineProps(['viewer'])
 
 const videoPopupVisible = ref(false)
 const videoEl = ref(null)
+const videoEl2 = ref(null)
 const currentCameraLabel = ref('')
+const currentSubCameraLabel = ref('')
 const popupPosition = ref({ x: 0, y: 0 })
 let hlsInstance = null
+let hlsInstance2 = null
 let screenEventHandler = null
 
 let postRender = null
 
-const openVideoPopup = async (source, cameraIndexCode, label) => {
+const openVideoPopup = async (source, cameraIndexCode, label, subCameraIndexCode, subLabel) => {
   currentCameraLabel.value = label || ''
+  currentSubCameraLabel.value = subLabel || ''
   if (source) {
     if (postRender) {
       postRender()
@@ -153,8 +167,9 @@ const openVideoPopup = async (source, cameraIndexCode, label) => {
         cartesian = gs3d.Cesium.Cartesian3.fromDegrees(source[0], source[1], source[2] || 0)
       } else {
         // 从 scene.pick 调用，source 是 pick 结果（entity）
-        cartesian = source.id._position.getValue()
+        cartesian = source?.id?._position?.getValue?.()
       }
+      if (!cartesian) return
       const windowPosition = gs3d.Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, cartesian)
       const scaleX = window.innerWidth / 1920
       const scaleY = window.innerHeight / 1080
@@ -169,6 +184,9 @@ const openVideoPopup = async (source, cameraIndexCode, label) => {
   videoPopupVisible.value = true
   await nextTick()
   getTestCamera(cameraIndexCode)
+  if (subCameraIndexCode) {
+    getTestCamera2(subCameraIndexCode)
+  }
 }
 
 const closeVideoPopup = () => {
@@ -183,6 +201,17 @@ const closeVideoPopup = () => {
     video.removeAttribute('src')
     video.load()
   }
+  if (hlsInstance2) {
+    hlsInstance2.destroy()
+    hlsInstance2 = null
+  }
+  const video2 = videoEl2.value
+  if (video2) {
+    video2.pause()
+    video2.removeAttribute('src')
+    video2.load()
+  }
+  currentSubCameraLabel.value = ''
 }
 
 onMounted(() => {
@@ -210,8 +239,20 @@ onMounted(() => {
       closeVideoPopup()
       return
     }
-    const entityName = pick?.id?.name || pick?.id?._name || ''
-    await openVideoPopup(pick, undefined, entityName)
+    console.log('pick', pick);
+    const graphicName = pick?.id?.graphicName || ''
+    const cameraCode = graphicName.replace(/^camera_/, '')
+    const matched = flatCameraList.find(c => c.cameraIndexCode === cameraCode)
+    if (matched) {
+      if (matched.sub_label) {
+        await openVideoPopup(pick, matched.cameraIndexCode, matched.label, matched.sub_cameraIndexCode, matched.sub_label)
+      } else {
+        await openVideoPopup(pick, matched.cameraIndexCode, matched.label)
+      }
+    } else {
+      const entityName = pick?.id?.name || pick?.id?._name || ''
+      await openVideoPopup(pick, cameraCode || undefined, entityName)
+    }
   }, gs3d.Cesium.ScreenSpaceEventType.LEFT_CLICK)
 })
 onBeforeUnmount(() => {
@@ -220,6 +261,13 @@ onBeforeUnmount(() => {
     screenEventHandler = null
   }
   closeVideoPopup()
+  gs3d.common.draw.clearAllGraphic(viewer)
+  if (postRender) {
+    postRender()
+    postRender = null
+  }
+  emitter.off('nextStep')
+  emitter.off('completeCamera')
 })
 const showContent = ref(false)
 const showContentFuc = () => {
@@ -338,14 +386,17 @@ const getTestCamera = async (cameraIndexCode) => {
   let streamUrl = ''
   if (cameraIndexCode) {
     try {
-      const res = await axios.post('/api/cameraInfo/getPreviewURL', { cameraIndexCode })
+      const res = await axios.post('/api/cameraInfo/getPreviewURL', { cameraIndexCode, protocol: 'hls' }, {
+        headers: {
+          'X-Ca-Key': '28904913',
+          "X-Ca-Signature": "JNaWX9D5++eMu8xIQXa/ymDeMPTtq6L78lFVvtlgVLc=",
+          "X-Ca-Signature-Headers": "x-ca-key"
+        }
+      })
       streamUrl = res.data?.data?.url || ''
     } catch (e) {
       console.error('获取摄像头流地址失败', e)
     }
-  }
-  if (!streamUrl) {
-    streamUrl = 'http://10.32.10.65:83/openUrl/qE2rOF2/live.m3u8'
   }
   if (Hls.isSupported()) {
     if (hlsInstance) {
@@ -366,6 +417,44 @@ const getTestCamera = async (cameraIndexCode) => {
     }
   }
 }
+
+const getTestCamera2 = async (cameraIndexCode) => {
+  let streamUrl = ''
+  if (cameraIndexCode) {
+    try {
+      const res = await axios.post('/api/cameraInfo/getPreviewURL', { cameraIndexCode, protocol: 'hls' }, {
+        headers: {
+          'X-Ca-Key': '28904913',
+          "X-Ca-Signature": "JNaWX9D5++eMu8xIQXa/ymDeMPTtq6L78lFVvtlgVLc=",
+          "X-Ca-Signature-Headers": "x-ca-key"
+        }
+      })
+      streamUrl = res.data?.data?.url || ''
+    } catch (e) {
+      console.error('获取副摄像头流地址失败', e)
+    }
+  }
+  if (Hls.isSupported()) {
+    if (hlsInstance2) {
+      hlsInstance2.destroy()
+      hlsInstance2 = null
+    }
+    const video = videoEl2.value
+    if (!video) return
+    const hls = new Hls();
+    hls.loadSource(streamUrl);
+    hls.attachMedia(video);
+    hlsInstance2 = hls
+  } else {
+    const video = videoEl2.value
+    if (video && video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+      video.play()
+    }
+  }
+}
+
+
 </script>
 
 <style lang="scss" scoped>
