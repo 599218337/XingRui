@@ -386,7 +386,7 @@ const getTestCamera = async (cameraIndexCode) => {
   let streamUrl = ''
   if (cameraIndexCode) {
     try {
-      const res = await axios.post('/api/cameraInfo/getPreviewURL', { cameraIndexCode, protocol: 'hls' }, {
+      const res = await axios.post('/camera-locate/artemis/api/video/v2/cameras/previewURLs', { cameraIndexCode, protocol: 'hls' }, {
         headers: {
           'X-Ca-Key': '28904913',
           "X-Ca-Signature": "JNaWX9D5++eMu8xIQXa/ymDeMPTtq6L78lFVvtlgVLc=",

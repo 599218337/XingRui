@@ -52,7 +52,16 @@ const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
     // 扫描周期 ≈ (40 + 10) / (0.15 * 60) ≈ 5.5秒
     transitionTimer = setTimeout(() => {
       removeShaderEffect(allTilesetIds)
-      applyShaderEffect(allTilesetIds, effectType)
+      if (effectType === 'xray') {
+        // 不同管线使用不同颜色
+        applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0])
+        applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)
+        applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)
+        applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.7)
+        applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7)
+      } else {
+        applyShaderEffect(allTilesetIds, effectType)
+      }
       activeEffect.value = effectType
       isTransitioning.value = false
       transitionTimer = null
@@ -137,9 +146,18 @@ onMounted(async () => {
 
   // 应用本地时间显示
   setupLocalTimeDisplay();
+  // 加载模型期间持续播放扫描效果
+  isTransitioning.value = true
   await addAllModel()
-  // 默认启用 X-Ray 模式
-  toggleShaderEffect('xray')
+  // 全部模型加载完成，切换到 X-Ray 模式（不同模型不同颜色）
+  removeShaderEffect(allTilesetIds)
+  applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0]) // 青白色
+  applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)       // 紫红色
+  applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)       // 绿色
+  applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.9)       // 深蓝色
+  applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7)       // 黄色
+  activeEffect.value = 'xray'
+  isTransitioning.value = false
 
 })
 
@@ -193,6 +211,7 @@ const addAllModel = async () => {
     },
   },
   )
+  applyShaderEffect(['noWallBuild'], 'scanGradient')
 
 
   await gs3d.manager.layerManager.addLayer({
@@ -207,6 +226,7 @@ const addAllModel = async () => {
     clampToGround: true,
   },
   )
+  applyShaderEffect(['wall'], 'scanGradient')
 
   await gs3d.manager.layerManager.addLayer({
     id: 'jyPipe',
@@ -219,6 +239,7 @@ const addAllModel = async () => {
     },
   },
   )
+  applyShaderEffect(['jyPipe'], 'scanGradient')
 
   await gs3d.manager.layerManager.addLayer({
     id: 'lqPipe',
@@ -231,6 +252,7 @@ const addAllModel = async () => {
     },
   },
   )
+  applyShaderEffect(['lqPipe'], 'scanGradient')
 
   await gs3d.manager.layerManager.addLayer({
     id: 'qqPipe',
@@ -243,6 +265,7 @@ const addAllModel = async () => {
     },
   },
   )
+  applyShaderEffect(['qqPipe'], 'scanGradient')
 
   await gs3d.manager.layerManager.addLayer({
     id: 'ysPipe',
@@ -255,6 +278,7 @@ const addAllModel = async () => {
     },
   },
   )
+  applyShaderEffect(['ysPipe'], 'scanGradient')
   const noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
   await noWallEntry.layer.tileSet.readyPromise
   const boundingSphere = noWallEntry.layer.tileSet.boundingSphere

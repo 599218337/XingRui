@@ -64,10 +64,16 @@ export function createFresnelShader(
 /**
  * 创建 X-Ray 全息透视效果的 CustomShader
  * ★ 完全替换材质：模型变为半透明骨架，带水平扫描线动画，真正"看穿"的效果
+ * @param xrayColor 颜色 [r, g, b]
+ * @param opacity 不透明度 0-1，越高颜色越浓（背面更可见），默认 0.3
  */
 export function createXRayShader(
     xrayColor: [number, number, number] = [0.0, 0.6, 1.0],
+    opacity: number = 0.3,
 ) {
+    // opacity 控制：背面可见度 和 基础填充浓度
+    const backfaceBase = Math.max(0.01, opacity * 0.8)
+    const alphaBoost = opacity
     return new Cesium.CustomShader({
         // REPLACE_MATERIAL: 完全替换，不保留原色
         mode: Cesium.CustomShaderMode.REPLACE_MATERIAL,
@@ -77,6 +83,14 @@ export function createXRayShader(
             u_xrayColor: {
                 type: Cesium.UniformType.VEC3,
                 value: new Cesium.Cartesian3(xrayColor[0], xrayColor[1], xrayColor[2]),
+            },
+            u_backfaceBase: {
+                type: Cesium.UniformType.FLOAT,
+                value: backfaceBase,
+            },
+            u_alphaBoost: {
+                type: Cesium.UniformType.FLOAT,
+                value: alphaBoost,
             },
         },
         fragmentShaderText: `
@@ -88,8 +102,8 @@ export function createXRayShader(
 
         vec3 viewDir = normalize(-positionEC);
 
-        // 背面剔除：如果是背面（内墙），极大降低透明度，防止内外叠加闪烁
-        float backfaceMultiplier = gl_FrontFacing ? 1.0 : 0.01;
+        // 背面显示：opacity 越高背面越可见，让颜色更浓
+        float backfaceMultiplier = gl_FrontFacing ? 1.0 : u_backfaceBase;
 
         // 反向菲涅尔：正面几乎消失，边缘轮廓亮
         float dotNV = abs(dot(normalEC, viewDir));
@@ -117,11 +131,11 @@ export function createXRayShader(
         material.diffuse = edgeColor + scanColor * 0.15 + gridColor;
 
         // ============ 透明度 ============
-        float baseAlpha = 0.02 + edge * 0.5;
+        float baseAlpha = 0.02 + u_alphaBoost * 0.3 + edge * 0.5;
         baseAlpha += gridLine * 0.15;
 
-        // 叠加背面剔除系数
-        material.alpha = baseAlpha * backfaceMultiplier;
+        // 叠加背面系数
+        material.alpha = clamp(baseAlpha, 0.0, 1.0) * backfaceMultiplier;
       }
     `,
     })
@@ -224,19 +238,22 @@ const originalShaders = new Map<string, any>()
 /**
  * 为指定 ID 的 3D Tiles 应用 shader 效果
  * @param tilesetIds 要应用效果的 tileset ID 数组
- * @param effectType 效果类型: 'fresnel' | 'xray'
+ * @param effectType 效果类型: 'fresnel' | 'xray' | 'scanGradient'
+ * @param color 可选，自定义颜色 [r, g, b]，取值 0-1
  */
 export function applyShaderEffect(
     tilesetIds: string[],
     effectType: 'fresnel' | 'xray' | 'scanGradient',
+    color?: [number, number, number],
+    opacity?: number,
 ) {
     let shader: any
     if (effectType === 'fresnel') {
-        shader = createFresnelShader()
+        shader = createFresnelShader(color)
     } else if (effectType === 'xray') {
-        shader = createXRayShader()
+        shader = createXRayShader(color, opacity)
     } else {
-        shader = createScanGradientShader()
+        shader = createScanGradientShader(color)
     }
 
     for (const id of tilesetIds) {
