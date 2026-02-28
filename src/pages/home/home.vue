@@ -22,22 +22,41 @@ import utils from '@/utils/utils'
 import { applyShaderEffect, removeShaderEffect } from '@/utils/shaderEffects'
 const time = ref('')
 const activeEffect = ref<'fresnel' | 'xray' | null>(null)
+const isTransitioning = ref(false)
+let transitionTimer: ReturnType<typeof setTimeout> | null = null
 
 // 所有 3D Tiles 的 ID
 const allTilesetIds = ['noWallBuild', 'wall', 'jyPipe', 'lqPipe', 'qqPipe', 'ysPipe']
 
 const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
-  if (activeEffect.value === effectType) {
-    // 当前效果已激活，关闭它
+  // 清除正在进行的过渡动画
+  if (transitionTimer) {
+    clearTimeout(transitionTimer)
+    transitionTimer = null
+  }
+
+  if (activeEffect.value === effectType || isTransitioning.value) {
+    // 当前效果已激活或正在过渡，关闭它 → 切换回3D模型
     removeShaderEffect(allTilesetIds)
     activeEffect.value = null
+    isTransitioning.value = false
   } else {
-    // 先移除旧效果，再应用新效果
+    // 先播放扫描过渡动画，然后切换到目标效果
     if (activeEffect.value) {
       removeShaderEffect(allTilesetIds)
     }
-    applyShaderEffect(allTilesetIds, effectType)
-    activeEffect.value = effectType
+    isTransitioning.value = true
+    applyShaderEffect(allTilesetIds, 'scanGradient')
+
+    // 扫描完一轮后自动切换到目标效果
+    // 扫描周期 ≈ (40 + 10) / (0.15 * 60) ≈ 5.5秒
+    transitionTimer = setTimeout(() => {
+      removeShaderEffect(allTilesetIds)
+      applyShaderEffect(allTilesetIds, effectType)
+      activeEffect.value = effectType
+      isTransitioning.value = false
+      transitionTimer = null
+    }, 5500)
   }
 }
 let timer = null
@@ -119,12 +138,15 @@ onMounted(async () => {
   // 应用本地时间显示
   setupLocalTimeDisplay();
   await addAllModel()
+  // 默认启用 X-Ray 模式
+  toggleShaderEffect('xray')
 
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', getScale)
   if (timer) clearInterval(timer)
+  if (transitionTimer) clearTimeout(transitionTimer)
 })
 
 function setupLocalTimeDisplay() {
@@ -317,15 +339,14 @@ const pickPoint = () => {
   <div class="home" ref="homeref">
 
     <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
-    <!-- Shader 特效按钮组 -->
+    <!-- 3D模型/网格模型 切换开关 -->
     <div class="shader-btn-group">
-      <!-- <button class="shader-btn" :class="{ active: activeEffect === 'fresnel' }" @click="toggleShaderEffect('fresnel')">
-        <span class="shader-btn-icon">✦</span>
-        Fresnel 发光
-      </button> -->
-      <button class="shader-btn" :class="{ active: activeEffect === 'xray' }" @click="toggleShaderEffect('xray')">
-        <span class="shader-btn-icon">☢</span>
-        网格透视
+      <button class="shader-btn model-switch" @click="toggleShaderEffect('xray')">
+        <span class="switch-track" :class="{ active: activeEffect !== 'xray' && !isTransitioning }">
+          <span class="switch-thumb"></span>
+        </span>
+        <span class="switch-label">{{ isTransitioning ? '网格构建中...' : (activeEffect === 'xray' ? '网格模型' : '3D模型')
+          }}</span>
       </button>
     </div>
     <!-- loading -->
@@ -556,10 +577,10 @@ const pickPoint = () => {
   gap: 8px;
 }
 
-.shader-btn {
+.shader-btn.model-switch {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   padding: 8px 16px;
   border: 1px solid rgba(100, 180, 255, 0.3);
   border-radius: 6px;
@@ -573,21 +594,47 @@ const pickPoint = () => {
   pointer-events: auto;
 }
 
-.shader-btn:hover {
+.shader-btn.model-switch:hover {
   border-color: rgba(100, 180, 255, 0.6);
   background: rgba(20, 50, 90, 0.85);
   color: #b8e0ff;
   box-shadow: 0 0 12px rgba(80, 160, 255, 0.25);
 }
 
-.shader-btn.active {
-  border-color: rgba(80, 200, 255, 0.8);
-  background: linear-gradient(135deg, rgba(20, 60, 120, 0.9), rgba(10, 40, 80, 0.9));
-  color: #fff;
-  box-shadow: 0 0 18px rgba(80, 200, 255, 0.35), inset 0 0 12px rgba(80, 200, 255, 0.1);
+.switch-track {
+  position: relative;
+  width: 36px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(100, 180, 255, 0.25);
+  transition: background 0.3s ease;
+  flex-shrink: 0;
 }
 
-.shader-btn-icon {
-  font-size: 16px;
+.switch-track.active {
+  background: rgba(80, 200, 255, 0.6);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b8e0ff;
+  transition: transform 0.3s ease;
+  box-shadow: 0 0 4px rgba(80, 200, 255, 0.4);
+}
+
+.switch-track.active .switch-thumb {
+  transform: translateX(18px);
+  background: #fff;
+  box-shadow: 0 0 8px rgba(80, 200, 255, 0.6);
+}
+
+.switch-label {
+  font-size: 13px;
+  white-space: nowrap;
 }
 </style>

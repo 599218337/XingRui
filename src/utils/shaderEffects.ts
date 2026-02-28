@@ -66,7 +66,7 @@ export function createFresnelShader(
  * ★ 完全替换材质：模型变为半透明骨架，带水平扫描线动画，真正"看穿"的效果
  */
 export function createXRayShader(
-    xrayColor: [number, number, number] = [0.0, 1.0, 0.8],
+    xrayColor: [number, number, number] = [0.0, 0.6, 1.0],
 ) {
     return new Cesium.CustomShader({
         // REPLACE_MATERIAL: 完全替换，不保留原色
@@ -83,39 +83,136 @@ export function createXRayShader(
       void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
         vec3 normalEC = fsInput.attributes.normalEC;
         vec3 positionEC = fsInput.attributes.positionEC;
+        // 使用模型局部坐标生成固定网格，避免眼坐标导致的摩尔纹
+        vec3 positionMC = fsInput.attributes.positionMC;
+
         vec3 viewDir = normalize(-positionEC);
+
+        // 背面剔除：如果是背面（内墙），极大降低透明度，防止内外叠加闪烁
+        float backfaceMultiplier = gl_FrontFacing ? 1.0 : 0.01;
 
         // 反向菲涅尔：正面几乎消失，边缘轮廓亮
         float dotNV = abs(dot(normalEC, viewDir));
         float edge = pow(1.0 - dotNV, 1.2);
 
-        // ============ 水平扫描线（从下往上移动） ============
-        // 使用眼空间 Y 坐标 + 时间偏移实现移动扫描线
+        // ============ 水平扫描线 ============
+        // 扫描线保留眼坐标，始终从屏幕下方往上扫
         float scanSpeed = czm_frameNumber * 0.06;
         float scanY = positionEC.y * 3.0 + scanSpeed;
-        // 主扫描线：一条亮带
         float scanBand = smoothstep(0.0, 0.2, abs(sin(scanY))) 
                        * smoothstep(0.0, 0.05, abs(cos(scanY * 0.5)));
-        // 细密网格线
-        float gridLine = smoothstep(0.92, 1.0, abs(sin(positionEC.y * 60.0)))
-                       + smoothstep(0.92, 1.0, abs(sin(positionEC.x * 60.0)));
+
+        // ============ 网格线（使用模型坐标 + 低频率） ============
+        // 改用 positionMC 使网格固定于模型表面，频率降到 4.0 消除摩尔纹
+        float gridLine = smoothstep(0.85, 1.0, abs(sin(positionMC.x * 20.0)))
+                       + smoothstep(0.85, 1.0, abs(sin(positionMC.y * 20.0)))
+                       + smoothstep(0.85, 1.0, abs(sin(positionMC.z * 20.0)));
         gridLine = clamp(gridLine, 0.0, 1.0) * 0.3;
 
         // ============ 颜色合成 ============
-        // 边缘轮廓线
         vec3 edgeColor = u_xrayColor * edge * 1.5;
-        // 网格 + 扫描线
         vec3 scanColor = u_xrayColor * 0.4 * (1.0 - scanBand * 0.3);
         vec3 gridColor = u_xrayColor * gridLine;
 
         material.diffuse = edgeColor + scanColor * 0.15 + gridColor;
 
         // ============ 透明度 ============
-        // 正面几乎完全透明，边缘不透明 → 线框骨架感
         float baseAlpha = 0.02 + edge * 0.5;
-        // 网格线处稍微加强
         baseAlpha += gridLine * 0.15;
-        material.alpha = baseAlpha;
+
+        // 叠加背面剔除系数
+        material.alpha = baseAlpha * backfaceMultiplier;
+      }
+    `,
+    })
+}
+
+/**
+ * 创建 扫描线 + 海拔渐变 效果的 CustomShader
+ * ★ 底部深色→顶部亮色的"接地发光"渐变
+ * ★ 一条明亮光带自下而上周期性扫描（模型空间坐标驱动）
+ */
+export function createScanGradientShader(
+    baseColor: [number, number, number] = [0.0, 0.6, 1.0],
+    maxHeight: number = 40.0,
+    scanSpeed: number = 0.15,
+    scanBandWidth: number = 1.5,
+) {
+    return new Cesium.CustomShader({
+        mode: Cesium.CustomShaderMode.REPLACE_MATERIAL,
+        lightingModel: Cesium.LightingModel.UNLIT,
+        translucencyMode: Cesium.CustomShaderTranslucencyMode.TRANSLUCENT,
+        uniforms: {
+            u_baseColor: {
+                type: Cesium.UniformType.VEC3,
+                value: new Cesium.Cartesian3(baseColor[0], baseColor[1], baseColor[2]),
+            },
+            u_maxHeight: {
+                type: Cesium.UniformType.FLOAT,
+                value: maxHeight,
+            },
+            u_scanSpeed: {
+                type: Cesium.UniformType.FLOAT,
+                value: scanSpeed,
+            },
+            u_scanBandWidth: {
+                type: Cesium.UniformType.FLOAT,
+                value: scanBandWidth,
+            },
+        },
+        fragmentShaderText: `
+      void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
+        vec3 positionMC = fsInput.attributes.positionMC;
+        vec3 positionEC = fsInput.attributes.positionEC;
+        vec3 normalEC  = fsInput.attributes.normalEC;
+        vec3 viewDir   = normalize(-positionEC);
+
+        // ============ 计算真实世界高度 ============
+        // czm_model 将模型坐标转为世界坐标 (ECEF)
+        vec4 worldPos = czm_model * vec4(positionMC, 1.0);
+        // 模型原点在世界坐标中的位置
+        vec4 modelOrigin = czm_model * vec4(0.0, 0.0, 0.0, 1.0);
+        // 在 ECEF 中，"上"方向 = normalize(position)
+        vec3 upDir = normalize(modelOrigin.xyz);
+        // 当前点相对于模型原点沿"上"方向的投影 = 真实高度差
+        float modelHeight = dot(worldPos.xyz - modelOrigin.xyz, upDir);
+
+        // 背面剔除，防止内外墙重叠闪烁
+        float backfaceMultiplier = gl_FrontFacing ? 1.0 : 0.1;
+
+        // ============ 1. 边缘光 (Fresnel) ============
+        float dotNV = abs(dot(normalEC, viewDir));
+        float edge = pow(1.0 - dotNV, 1.5);
+
+        // ============ 2. 海拔渐变 (接地发光) ============
+        float heightRatio = clamp(modelHeight / u_maxHeight, 0.0, 1.0);
+        float elevationGradient = pow(heightRatio, 1.5);
+
+        // ============ 3. 动态扫描线 (自下而上) ============
+        float time = czm_frameNumber * u_scanSpeed;
+        float currentScanY = mod(time, u_maxHeight + 10.0) - 5.0;
+        float distanceToScan = abs(modelHeight - currentScanY);
+        float scanBand = smoothstep(u_scanBandWidth, 0.0, distanceToScan);
+
+        // 扫描线中心色：基础蓝 + 白色混合 → 高亮激光感
+        vec3 scanCoreColor = mix(u_baseColor, vec3(1.0, 1.0, 1.0), 0.6);
+
+        // ============ 4. 网格线 ============
+        float gridLine = smoothstep(0.88, 1.0, abs(sin(positionMC.x * 18.0)))
+                       + smoothstep(0.88, 1.0, abs(sin(positionMC.y * 18.0)))
+                       + smoothstep(0.88, 1.0, abs(sin(positionMC.z * 18.0)));
+        gridLine = clamp(gridLine, 0.0, 1.0) * 0.2;
+
+        // ============ 5. 合成 ============
+        material.diffuse = (u_baseColor * edge)
+                         + (u_baseColor * elevationGradient * 0.8)
+                         + (u_baseColor * gridLine)
+                         + (scanCoreColor * scanBand * 2.0);
+
+        // 透明度
+        float baseAlpha = 0.05 + (edge * 0.5) + (elevationGradient * 0.4) + scanBand;
+        baseAlpha += gridLine * 0.1;
+        material.alpha = clamp(baseAlpha, 0.0, 1.0) * backfaceMultiplier;
       }
     `,
     })
@@ -131,10 +228,16 @@ const originalShaders = new Map<string, any>()
  */
 export function applyShaderEffect(
     tilesetIds: string[],
-    effectType: 'fresnel' | 'xray',
+    effectType: 'fresnel' | 'xray' | 'scanGradient',
 ) {
-    const shader =
-        effectType === 'fresnel' ? createFresnelShader() : createXRayShader()
+    let shader: any
+    if (effectType === 'fresnel') {
+        shader = createFresnelShader()
+    } else if (effectType === 'xray') {
+        shader = createXRayShader()
+    } else {
+        shader = createScanGradientShader()
+    }
 
     for (const id of tilesetIds) {
         const entry = gs3d.global.variable.gs3dAllLayer.find(

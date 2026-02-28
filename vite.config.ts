@@ -27,12 +27,17 @@ export default defineConfig({
     // 模块化使用cesium时，需配置全局变量CESIUM_BASE_URL指向cesium包的四大资源文件夹
     CESIUM_BASE_URL: "'./gs3d/lib/CesiumChanged'",
   },
-  server:{
-    proxy:{
-      "/people-locate":{
-        target:'http://10.253.11.103:9999/',
-        changeOrigin:true,
-        rewrite:path=>path.replace(/^\/people-locate/,'')
+  server: {
+    proxy: {
+      "/people-locate": {
+        target: 'http://10.253.11.103:9999/',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/people-locate/, '')
+      },
+      "/camera-locate": {
+        target: 'http://10.32.10.61:443/',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/camera-locate/, '')
       }
     }
   }
