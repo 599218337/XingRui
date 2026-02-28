@@ -25,10 +25,10 @@
                 <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
                   <div class="view" @click.stop="location(item)"></div>
                 </el-tooltip>
-                <el-tooltip content="编辑" placement="top" popper-class="iconTooltip" :offset="3">
+                <!-- <el-tooltip content="编辑" placement="top" popper-class="iconTooltip" :offset="3">
                   <div class="edit" @click.stop="editPoi(item)"></div>
                 </el-tooltip>
-                <div class="arrow"></div>
+                <div class="arrow"></div> -->
               </div>
             </div>
             <!-- sub_label 作为额外一条展示 -->
@@ -44,12 +44,12 @@
                     @click.stop="location({ ...item, label: item.sub_label, cameraIndexCode: item.sub_cameraIndexCode })">
                   </div>
                 </el-tooltip>
-                <el-tooltip content="编辑" placement="top" popper-class="iconTooltip" :offset="3">
+                <!-- <el-tooltip content="编辑" placement="top" popper-class="iconTooltip" :offset="3">
                   <div class="edit"
                     @click.stop="editPoi({ ...item, label: item.sub_label, cameraIndexCode: item.sub_cameraIndexCode })">
                   </div>
                 </el-tooltip>
-                <div class="arrow"></div>
+                <div class="arrow"></div> -->
               </div>
             </div>
           </template>
@@ -390,7 +390,8 @@ const getTestCamera = async (cameraIndexCode) => {
         headers: {
           'X-Ca-Key': '28904913',
           "X-Ca-Signature": "JNaWX9D5++eMu8xIQXa/ymDeMPTtq6L78lFVvtlgVLc=",
-          "X-Ca-Signature-Headers": "x-ca-key"
+          "X-Ca-Signature-Headers": "x-ca-key",
+          "Accept": "*/*"
         }
       })
       streamUrl = res.data?.data?.url || ''
@@ -426,7 +427,8 @@ const getTestCamera2 = async (cameraIndexCode) => {
         headers: {
           'X-Ca-Key': '28904913',
           "X-Ca-Signature": "JNaWX9D5++eMu8xIQXa/ymDeMPTtq6L78lFVvtlgVLc=",
-          "X-Ca-Signature-Headers": "x-ca-key"
+          "X-Ca-Signature-Headers": "x-ca-key",
+          "Accept": "*/*"
         }
       })
       streamUrl = res.data?.data?.url || ''

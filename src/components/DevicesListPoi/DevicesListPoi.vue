@@ -13,22 +13,22 @@
         <span>设备统计</span>
       </div>
       <div class="content">
-        <div class="contentItem" v-for="(item, index) in Array.from(store.state.devicesMap.values())"
-          @click="location(item)">
-          <div class="Item">
-            <div class="point" :style="{ background: item.state ? '#00FF7A' : '#FF1010' }"></div>
-            <div class="text">{{ item.Name }}</div>
-          </div>
-          <div class="icon">
-            <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
-              <div class="view" @click.stop="location(item)"></div>
-            </el-tooltip>
-            <el-tooltip content="编辑" placement="top" popper-class="iconTooltip" :offset="3">
-              <div class="edit" @click.stop="editPoi(item)"></div>
-            </el-tooltip>
-            <div class="arrow"></div>
-          </div>
-        </div>
+        <template v-for="(items, category) in groupedDeviceList" :key="category">
+          <div class="categoryHeader" v-if="items && items.length">{{ category }}</div>
+          <template v-for="item in items" :key="item.id">
+            <div class="contentItem">
+              <div class="Item">
+                <div class="point" style="background: #00FF7A"></div>
+                <div class="text">{{ item.tagNumber }} - {{ item.description }}</div>
+              </div>
+              <div class="icon">
+                <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
+                  <div class="view" @click.stop="showDeviceDetail(item)"></div>
+                </el-tooltip>
+              </div>
+            </div>
+          </template>
+        </template>
 
       </div>
       <div class="line"></div>
@@ -37,6 +37,59 @@
     <div id="cameraBtn" @click="showContentFuc"> </div>
 
 
+  </div>
+  <!-- 设备详情弹窗 -->
+  <div v-if="deviceDetailVisible" class="device-detail-popup">
+    <div class="device-detail-popup__header">
+      <span>{{ currentDevice?.tagNumber }} - {{ currentDevice?.description }}</span>
+      <button class="device-detail-popup__close" @click="closeDeviceDetail"></button>
+    </div>
+    <div class="device-detail-popup__body">
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">序号</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.id }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">位号</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.tagNumber }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">描述</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.description }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">设备台账分类</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.categoryName || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">ABC标识</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.abcLabel || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">投用日期</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.commissionDate || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">责任人</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.responsible || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">量程</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.range || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">工作介质</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.workingMedium || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">工作压力</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.workingPressure || '-' }}</span>
+      </div>
+      <div class="device-detail-popup__row">
+        <span class="device-detail-popup__label">工作温度</span>
+        <span class="device-detail-popup__value">{{ currentDevice?.workingTemp || '-' }}</span>
+      </div>
+    </div>
   </div>
   <div class="editMessage">
     <div class="edit1" v-show="showEdit1">
@@ -64,11 +117,37 @@
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from "vuex";
 const store = useStore();
 
 import emitter from '@/utils/bus'
+import { deviceList } from './deviceList'
+
+// 按 categoryName 分组
+const groupedDeviceList = computed(() => {
+  const groups = {}
+  deviceList.forEach(item => {
+    const key = item.categoryName || '其他'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+  })
+  return groups
+})
+
+// 设备详情弹窗
+const deviceDetailVisible = ref(false)
+const currentDevice = ref(null)
+
+const showDeviceDetail = (item) => {
+  currentDevice.value = item
+  deviceDetailVisible.value = true
+}
+
+const closeDeviceDetail = () => {
+  deviceDetailVisible.value = false
+  currentDevice.value = null
+}
 
 onMounted(() => {
 })

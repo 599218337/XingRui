@@ -149,7 +149,9 @@ onMounted(async () => {
   // 加载模型期间持续播放扫描效果
   isTransitioning.value = true
   await addAllModel()
-  // 全部模型加载完成，切换到 X-Ray 模式（不同模型不同颜色）
+  // 等待所有 tileset 的实际瓦片内容（b3dm）加载完毕
+  await waitForAllTilesLoaded()
+  // 全部瓦片加载完成，切换到 X-Ray 模式（不同模型不同颜色）
   removeShaderEffect(allTilesetIds)
   applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0]) // 青白色
   applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)       // 紫红色
@@ -191,6 +193,26 @@ function setupLocalTimeDisplay() {
 }
 
 
+// 等待所有 tileset 的实际瓦片（b3dm）加载完毕
+const waitForAllTilesLoaded = () => {
+  return new Promise<void>((resolve) => {
+    const check = () => {
+      const allLoaded = allTilesetIds.every(id => {
+        const entry = gs3d.global.variable.gs3dAllLayer.find((item: any) => item.id === id)
+        const tileset = entry?.layer?.tileSet
+        if (!tileset) return true
+        return tileset.tilesLoaded
+      })
+      if (allLoaded) {
+        resolve()
+      } else {
+        setTimeout(check, 500) // 每 500ms 检查一次
+      }
+    }
+    // 延迟 1 秒让 Cesium 开始瓦片请求流程，避免刚创建时 tilesLoaded 为 true 的误判
+    setTimeout(check, 1000)
+  })
+}
 
 const addAllModel = async () => {
   // await gs3d.manager.layerManager.addLayer({
@@ -309,9 +331,6 @@ const addAllModel = async () => {
 }
 
 
-
-
-
 const pickPoint = () => {
   const gridPickSearch = new gs3d.tools.areaFeaturePick({
     viewer: viewer.value,
@@ -362,17 +381,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref">
 
-    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
-    <!-- 3D模型/网格模型 切换开关 -->
-    <div class="shader-btn-group">
-      <button class="shader-btn model-switch" @click="toggleShaderEffect('xray')">
-        <span class="switch-track" :class="{ active: activeEffect !== 'xray' && !isTransitioning }">
-          <span class="switch-thumb"></span>
-        </span>
-        <span class="switch-label">{{ isTransitioning ? '网格构建中...' : (activeEffect === 'xray' ? '网格模型' : '3D模型')
-          }}</span>
-      </button>
-    </div>
+    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -425,7 +434,42 @@ const pickPoint = () => {
         <personStatistics :viewer="viewer"></personStatistics>
       </div>
     </Transition>
-    <footerNav></footerNav>
+    <footerNav>
+      <!-- 底部 赛博朋克风格“舵”切换盘 -->
+      <div class="hud-helm" @click="toggleShaderEffect('xray')">
+        <div class="helm-base"></div>
+
+        <!-- 左右刻度标签 -->
+        <div class="helm-labels">
+          <div class="label left" :class="{ active: activeEffect !== 'xray' && !isTransitioning }">
+            3D 模型
+          </div>
+          <div class="label right" :class="{ active: activeEffect === 'xray' && !isTransitioning }">
+            透视模型
+          </div>
+        </div>
+
+        <!-- 旋转的主舵轮 -->
+        <div class="helm-wheel" :class="{ 'is-xray': activeEffect === 'xray', 'is-loading': isTransitioning }">
+          <div class="helm-spokes">
+            <div class="helm-spoke" style="transform: rotate(0deg)"></div>
+            <div class="helm-spoke" style="transform: rotate(45deg)"></div>
+            <div class="helm-spoke" style="transform: rotate(90deg)"></div>
+            <div class="helm-spoke" style="transform: rotate(135deg)"></div>
+          </div>
+          <div class="helm-ring outer"></div>
+          <div class="helm-ring inner"></div>
+
+          <!-- 旋转指针 -->
+          <div class="helm-pointer"></div>
+        </div>
+
+        <!-- 中央过渡文字 -->
+        <div class="helm-status" v-if="isTransitioning">
+          构建中
+        </div>
+      </div>
+    </footerNav>
 
   </div>
 </template>
@@ -592,73 +636,175 @@ const pickPoint = () => {
   z-index: 9999;
 }
 
-.shader-btn-group {
-  position: absolute;
-  top: 100px;
-  left: 280px;
-  z-index: 1000;
-  display: flex;
-  gap: 8px;
-}
+/* --- 底部 赛博朋克“舵”切换盘 --- */
 
-.shader-btn.model-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  border: 1px solid rgba(100, 180, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(10, 22, 40, 0.75);
-  backdrop-filter: blur(8px);
-  color: #8ec8f6;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 1px;
-  pointer-events: auto;
-}
-
-.shader-btn.model-switch:hover {
-  border-color: rgba(100, 180, 255, 0.6);
-  background: rgba(20, 50, 90, 0.85);
-  color: #b8e0ff;
-  box-shadow: 0 0 12px rgba(80, 160, 255, 0.25);
-}
-
-.switch-track {
+.hud-helm {
   position: relative;
-  width: 36px;
-  height: 18px;
-  border-radius: 9px;
-  background: rgba(100, 180, 255, 0.25);
-  transition: background 0.3s ease;
-  flex-shrink: 0;
+  width: 380px;
+  height: 100px;
+  margin: 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1000;
 }
 
-.switch-track.active {
-  background: rgba(80, 200, 255, 0.6);
-}
-
-.switch-thumb {
+/* 装饰底座光晕 */
+.helm-base {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
+  bottom: -20px;
+  width: 200px;
+  height: 60px;
   border-radius: 50%;
-  background: #b8e0ff;
-  transition: transform 0.3s ease;
-  box-shadow: 0 0 4px rgba(80, 200, 255, 0.4);
+  background: radial-gradient(ellipse at top, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
+  filter: blur(5px);
+  pointer-events: none;
 }
 
-.switch-track.active .switch-thumb {
-  transform: translateX(18px);
-  background: #fff;
-  box-shadow: 0 0 8px rgba(80, 200, 255, 0.6);
+/* 旋转的主舵轮 */
+.helm-wheel {
+  position: absolute;
+  bottom: -80px;
+  /* 半隐藏在底部 */
+  width: 170px;
+  height: 170px;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 默认指向左侧 */
+  transform: rotate(-35deg);
 }
 
-.switch-label {
-  font-size: 13px;
-  white-space: nowrap;
+.helm-wheel.is-xray {
+  /* 开启透视模型指向右侧 */
+  transform: rotate(35deg);
+}
+
+.helm-wheel.is-loading {
+  /* 均匀旋转的动画，慢慢转 */
+  animation: slowSpin 2s linear infinite;
+}
+
+@keyframes slowSpin {
+  100% {
+    transform: rotate(325deg);
+    /* 起始是 -35，加360 = 325 */
+  }
+}
+
+/* 舵把手 (Spokes) */
+.helm-spokes {
+  position: absolute;
+  inset: 0;
+}
+
+.helm-spoke {
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: calc(50% - 3px);
+  width: 6px;
+  background: linear-gradient(to bottom, #00ffff 0%, rgba(0, 255, 255, 0.1) 15%, rgba(0, 255, 255, 0.1) 85%, #00ffff 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+}
+
+/* 外环机制 */
+.helm-ring.outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+/* 内环深色质感 */
+.helm-ring.inner {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 30, 60, 0.9) 0%, rgba(0, 10, 25, 0.95) 100%);
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+/* 顶部指针 */
+.helm-pointer {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 28px solid #ffffff;
+  filter: drop-shadow(0 0 10px #00ffff);
+  z-index: 2;
+}
+
+/* 指针根部装饰圆点 */
+.helm-pointer::after {
+  content: '';
+  position: absolute;
+  bottom: -32px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00ffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+/* 左右文字说明 */
+.helm-labels {
+  position: absolute;
+  width: 100%;
+  bottom: 45px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  pointer-events: none;
+}
+
+.helm-labels .label {
+  font-size: 16px;
+  font-weight: bold;
+  color: rgba(150, 220, 255, 0.5);
+  letter-spacing: 2px;
+  transition: all 0.4s;
+}
+
+.helm-labels .label.active {
+  color: #ffffff;
+  font-size: 18px;
+  text-shadow: 0 0 12px #00ffff, 0 0 20px #00ffff;
+  transform: translateY(-5px);
+}
+
+/* 中心过渡状态文字 */
+.helm-status {
+  position: absolute;
+  bottom: 35px;
+  /* 在轮盘中间稍微偏上，因为它是半隐藏的 */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ffff;
+  letter-spacing: 2px;
+  pointer-events: none;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 8px #00ffff;
+  }
 }
 </style>

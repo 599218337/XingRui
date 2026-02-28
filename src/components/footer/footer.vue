@@ -9,11 +9,13 @@
 <template>
   <div class="footer_wrapper">
     <div class="btnContent">
-      <div class="btn" v-for="item in btnArray" @click="changeBtn(item.id)">
-        <div :class="active == item.id ? 'text_active' : 'text'">{{ item.label }}</div>
-        <div :class="active == item.id ? 'img_active' : 'img'"></div>
-      </div>
-
+      <template v-for="(item, index) in btnArray" :key="item.id">
+        <div class="btn" @click="changeBtn(item.id)">
+          <div :class="active == item.id ? 'text_active' : 'text'">{{ item.label }}</div>
+          <div :class="active == item.id ? 'img_active' : 'img'"></div>
+        </div>
+        <slot v-if="index === 2"></slot>
+      </template>
     </div>
 
   </div>
@@ -131,7 +133,7 @@ const changeBtn = (id) => {
     //   })
     //   window.open(href.href, '_blank')
     //   break;
-    case 5:
+    case 4:
       if (btnArray.value[0].label == '收起图表') {
         btnArray.value[0].label = '展开图表'
         store.dispatch("setShowAside", false);
