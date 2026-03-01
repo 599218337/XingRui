@@ -63,7 +63,7 @@ export function createFresnelShader(
 
 /**
  * 创建 X-Ray 全息透视效果的 CustomShader
- * ★ 完全替换材质：模型变为半透明骨架，带水平扫描线动画，真正"看穿"的效果
+ * ★ MODIFY_MATERIAL：保留原材质，并支持平滑过渡扫描线和透明度渐变
  * @param xrayColor 颜色 [r, g, b]
  * @param opacity 不透明度 0-1，越高颜色越浓（背面更可见），默认 0.3
  */
@@ -75,9 +75,8 @@ export function createXRayShader(
     const backfaceBase = Math.max(0.01, opacity * 0.8)
     const alphaBoost = opacity
     return new Cesium.CustomShader({
-        // REPLACE_MATERIAL: 完全替换，不保留原色
-        mode: Cesium.CustomShaderMode.REPLACE_MATERIAL,
-        lightingModel: Cesium.LightingModel.UNLIT,
+        mode: Cesium.CustomShaderMode.MODIFY_MATERIAL,
+        lightingModel: Cesium.LightingModel.PBR,
         translucencyMode: Cesium.CustomShaderTranslucencyMode.TRANSLUCENT,
         uniforms: {
             u_xrayColor: {
@@ -92,15 +91,36 @@ export function createXRayShader(
                 type: Cesium.UniformType.FLOAT,
                 value: alphaBoost,
             },
+            u_transitionProgress: {
+                type: Cesium.UniformType.FLOAT,
+                value: 1.0, // 0.0 = Real Scene, 1.0 = XRay Mesh
+            },
+            u_transitionType: {
+                type: Cesium.UniformType.FLOAT,
+                value: 1.0, // 0.0 = Fade, 1.0 = Wipe Y
+            },
+            u_maxHeight: {
+                type: Cesium.UniformType.FLOAT,
+                value: 40.0, // Max height for Bottom to Top wipe
+            },
         },
         fragmentShaderText: `
       void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
         vec3 normalEC = fsInput.attributes.normalEC;
         vec3 positionEC = fsInput.attributes.positionEC;
-        // 使用模型局部坐标生成固定网格，避免眼坐标导致的摩尔纹
         vec3 positionMC = fsInput.attributes.positionMC;
 
         vec3 viewDir = normalize(-positionEC);
+
+        // ============ 计算真实世界高度 (用于自下而上的扫描过渡) ============ //
+        // 模型坐标转为世界坐标 (ECEF)
+        vec4 worldPos = czm_model * vec4(positionMC, 1.0);
+        // 模型原点在世界坐标中的位置
+        vec4 modelOrigin = czm_model * vec4(0.0, 0.0, 0.0, 1.0);
+        // "上"方向向量
+        vec3 upDir = normalize(modelOrigin.xyz);
+        // 当前点相对于模型原点沿"上"方向的投影高度差
+        float modelHeight = dot(worldPos.xyz - modelOrigin.xyz, upDir);
 
         // 背面显示：opacity 越高背面越可见，让颜色更浓
         float backfaceMultiplier = gl_FrontFacing ? 1.0 : u_backfaceBase;
@@ -109,33 +129,62 @@ export function createXRayShader(
         float dotNV = abs(dot(normalEC, viewDir));
         float edge = pow(1.0 - dotNV, 1.2);
 
-        // ============ 水平扫描线 ============
-        // 扫描线保留眼坐标，始终从屏幕下方往上扫
+        // ============ 水平扫描线 ============ //
         float scanSpeed = czm_frameNumber * 0.06;
         float scanY = positionEC.y * 3.0 + scanSpeed;
         float scanBand = smoothstep(0.0, 0.2, abs(sin(scanY))) 
                        * smoothstep(0.0, 0.05, abs(cos(scanY * 0.5)));
 
-        // ============ 网格线（使用模型坐标 + 低频率） ============
-        // 改用 positionMC 使网格固定于模型表面，频率降到 4.0 消除摩尔纹
+        // ============ 网格线 ============ //
         float gridLine = smoothstep(0.85, 1.0, abs(sin(positionMC.x * 20.0)))
                        + smoothstep(0.85, 1.0, abs(sin(positionMC.y * 20.0)))
                        + smoothstep(0.85, 1.0, abs(sin(positionMC.z * 20.0)));
         gridLine = clamp(gridLine, 0.0, 1.0) * 0.3;
 
-        // ============ 颜色合成 ============
         vec3 edgeColor = u_xrayColor * edge * 1.5;
         vec3 scanColor = u_xrayColor * 0.4 * (1.0 - scanBand * 0.3);
         vec3 gridColor = u_xrayColor * gridLine;
 
-        material.diffuse = edgeColor + scanColor * 0.15 + gridColor;
-
-        // ============ 透明度 ============
+        vec3 xrayDiffuse = edgeColor + scanColor * 0.15 + gridColor;
+        
         float baseAlpha = 0.02 + u_alphaBoost * 0.3 + edge * 0.5;
         baseAlpha += gridLine * 0.15;
+        float xrayAlpha = clamp(baseAlpha, 0.0, 1.0) * backfaceMultiplier;
 
-        // 叠加背面系数
-        material.alpha = clamp(baseAlpha, 0.0, 1.0) * backfaceMultiplier;
+        float mixFactor = u_transitionProgress;
+        
+        if (u_transitionType > 0.5) {
+            // Wipe Effect: Bottom to Top (using model height)
+            float currentScanY = u_transitionProgress * (u_maxHeight + 20.0) - 10.0;
+            
+            // isXRay = 1.0 when the scan line has passed this pixel height
+            float isXRay = step(modelHeight, currentScanY);
+            
+            // Bright highlight line at the boundary
+            float distanceToScan = abs(modelHeight - currentScanY);
+            float lineIntensity = smoothstep(1.5, 0.0, distanceToScan);
+            
+            mixFactor = isXRay;
+            xrayDiffuse += vec3(1.0, 1.0, 1.0) * lineIntensity * 2.5;
+            xrayAlpha = max(xrayAlpha, lineIntensity * 0.9);
+            
+            // ============ 解决模型变暗问题 ============ //
+            // 因为 CustomShader 的 mode 是 MODIFY_MATERIAL 并且开启了 TRANSLUCENT 半透明模式
+            // 在透明模式中，原本模型(非X-Ray部分)容易因此失去部分光照或产生自遮挡变暗。
+            // 解决办法：我们强制提亮非X射线阶段的原模型色彩
+            vec3 fixedBaseDiffuse = material.diffuse * 1.5;
+            vec3 fixedBaseEmissive = material.emissive + material.diffuse * 0.3;
+            material.diffuse = mix(fixedBaseDiffuse, xrayDiffuse, mixFactor);
+            material.alpha = mix(material.alpha, xrayAlpha, mixFactor);
+            material.emissive = mix(fixedBaseEmissive, xrayDiffuse * 0.8, mixFactor);
+        } else {
+            // Fade Effect
+            vec3 fixedBaseDiffuse = material.diffuse * 1.5;
+            vec3 fixedBaseEmissive = material.emissive + material.diffuse * 0.3;
+            material.diffuse = mix(fixedBaseDiffuse, xrayDiffuse, mixFactor);
+            material.alpha = mix(material.alpha, xrayAlpha, mixFactor);
+            material.emissive = mix(fixedBaseEmissive, xrayDiffuse * 0.8, mixFactor);
+        }
       }
     `,
     })
@@ -282,6 +331,18 @@ export function removeShaderEffect(tilesetIds: string[]) {
         if (entry?.layer?.tileSet) {
             entry.layer.tileSet.customShader = originalShaders.get(id) ?? undefined
             originalShaders.delete(id)
+        }
+    }
+}
+
+/**
+ * 设置指定 tilesets 的 customShader uniform
+ */
+export function setShaderUniform(tilesetIds: string[], uniformName: string, value: number) {
+    for (const id of tilesetIds) {
+        const entry = gs3d.global.variable.gs3dAllLayer.find((item: any) => item.id === id)
+        if (entry?.layer?.tileSet?.customShader) {
+            entry.layer.tileSet.customShader.setUniform(uniformName, value)
         }
     }
 }
