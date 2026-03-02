@@ -12,11 +12,19 @@
       <div class="header">
         <span>视频监控统计</span>
       </div>
+      <div class="searchBox">
+        <el-input v-model="searchKeyword" placeholder="请输入关键字进行过滤" clearable />
+      </div>
       <div class="content">
-        <template v-for="(items, key) in cameraList" :key="key">
-          <div class="categoryHeader" v-if="items && items.length">{{ areaNameMap[key] || key }}</div>
+        <template v-for="(items, key) in filteredCameraList" :key="key">
+          <div class="categoryHeader" v-if="items && items.length">
+            <span style="flex: 1;">{{ areaNameMap[key] || key }}</span>
+            <span style="cursor: pointer; font-size: 14px; color: #0C89EA;" @click.stop="toggleVisibility(key)">
+              {{ hiddenCategories[key] ? '显示' : '隐藏' }}
+            </span>
+          </div>
           <template v-for="item in items" :key="item.cameraIndexCode">
-            <div class="contentItem" @click="location(item)">
+            <div class="contentItem" v-show="!hiddenCategories[key]" @click="location(item)">
               <div class="Item">
                 <div class="point" :style="{ background: item.status ? '#00FF7A' : '#FF1010' }"></div>
                 <div class="text">{{ item.label }}</div>
@@ -32,7 +40,8 @@
               </div>
             </div>
             <!-- sub_label 作为额外一条展示 -->
-            <div class="contentItem" v-if="item.sub_label" :key="item.sub_cameraIndexCode"
+            <div class="contentItem" v-if="item.sub_label" v-show="!hiddenCategories[key]"
+              :key="item.sub_cameraIndexCode"
               @click="location({ ...item, label: item.sub_label, cameraIndexCode: item.sub_cameraIndexCode })">
               <div class="Item">
                 <div class="point" :style="{ background: item.status ? '#00FF7A' : '#FF1010' }"></div>
@@ -109,7 +118,7 @@
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useStore } from "vuex";
 import * as gs3d from '/public/gs3d/index';
 const store = useStore();
@@ -142,6 +151,80 @@ const areaNameMap = {
 const flatCameraList = Object.values(cameraList).flat();
 import Hls from 'hls.js';
 const { viewer } = defineProps(['viewer'])
+
+const searchKeyword = ref('')
+const hiddenCategories = ref({})
+
+const filteredCameraList = computed(() => {
+  if (!searchKeyword.value) return cameraList
+  const result = {}
+  Object.keys(cameraList).forEach(key => {
+    const list = cameraList[key]
+    const keyword = searchKeyword.value
+    const filtered = list.filter(item =>
+      (item.label && item.label.includes(keyword)) ||
+      (item.sub_label && item.sub_label.includes(keyword))
+    )
+    if (filtered.length > 0) {
+      result[key] = filtered
+    }
+  })
+  return result
+})
+
+const drawnGraphics = {}
+
+const toggleVisibility = (key) => {
+  if (hiddenCategories.value[key]) {
+    delete hiddenCategories.value[key]
+  } else {
+    hiddenCategories.value[key] = true
+  }
+  updateMapVisibility()
+}
+
+const updateMapVisibility = () => {
+  const keyword = searchKeyword.value
+
+  Object.keys(cameraList).forEach(key => {
+    const isCategoryHidden = hiddenCategories.value[key]
+    const list = cameraList[key] || []
+
+    list.forEach(item => {
+      let isVisible = !isCategoryHidden
+
+      if (keyword && isVisible) {
+        const matchLabel = item.label && item.label.includes(keyword)
+        const matchSubLabel = item.sub_label && item.sub_label.includes(keyword)
+        if (!matchLabel && !matchSubLabel) {
+          isVisible = false
+        }
+      }
+
+      const graphic = drawnGraphics[item.cameraIndexCode]
+      if (graphic) {
+        if (graphic.show !== undefined) {
+          graphic.show = isVisible
+        } else if (graphic.entity) {
+          graphic.entity.show = isVisible
+        } else if (graphic.canvas) {
+          graphic.show = isVisible
+        }
+      }
+
+      const graphicName = 'camera_' + item.cameraIndexCode
+      viewer.entities.values.forEach(entity => {
+        if (entity.graphicName === graphicName || entity.id === graphicName || entity.name === graphicName) {
+          entity.show = isVisible
+        }
+      })
+    })
+  })
+}
+
+watch(searchKeyword, () => {
+  updateMapVisibility()
+})
 
 const videoPopupVisible = ref(false)
 const videoEl = ref(null)
@@ -286,17 +369,20 @@ const closeVideoPopup = () => {
 }
 
 onMounted(() => {
-  flatCameraList.forEach(item => gs3d.common.draw.drawGraphic(viewer, {
-    "type": "Point",
-    "coordinates": item.coord
-  }, {
-    showBillBoard: true,
-    billBoardOption: {
-      text: '',
-      url: '/image/qiangji.png',
-    },
-    graphicName: 'camera_' + item.cameraIndexCode,
-  }))
+  flatCameraList.forEach(item => {
+    const graphic = gs3d.common.draw.drawGraphic(viewer, {
+      "type": "Point",
+      "coordinates": item.coord
+    }, {
+      showBillBoard: true,
+      billBoardOption: {
+        text: '',
+        url: '/image/qiangji.png',
+      },
+      graphicName: 'camera_' + item.cameraIndexCode,
+    })
+    drawnGraphics[item.cameraIndexCode] = graphic
+  })
 
   screenEventHandler = new gs3d.Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
   screenEventHandler.setInputAction(async function (e) {
