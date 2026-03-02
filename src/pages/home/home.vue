@@ -19,89 +19,53 @@ import { onMounted, onUnmounted, ref, reactive, watch } from 'vue'
 import { useStore } from "vuex";
 
 import utils from '@/utils/utils'
-import { applyShaderEffect, removeShaderEffect, setShaderUniform } from '@/utils/shaderEffects'
+import { applyShaderEffect, removeShaderEffect } from '@/utils/shaderEffects'
 const time = ref('')
 const activeEffect = ref<'fresnel' | 'xray' | null>(null)
 const isTransitioning = ref(false)
-let transitionFrameId: number | null = null
+let transitionTimer: ReturnType<typeof setTimeout> | null = null
 
 // 所有 3D Tiles 的 ID
 const allTilesetIds = ['noWallBuild', 'wall', 'jyPipe', 'lqPipe', 'qqPipe', 'ysPipe']
 
 const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
-  if (isTransitioning.value) return;
+  // 清除正在进行的过渡动画
+  if (transitionTimer) {
+    clearTimeout(transitionTimer)
+    transitionTimer = null
+  }
 
-  if (activeEffect.value === effectType) {
-    if (effectType === 'xray') {
-      isTransitioning.value = true;
-      setShaderUniform(allTilesetIds, 'u_transitionType', 0.0);
-
-      const duration = 500;
-      let startTime: number | null = null;
-
-      const animate = (time: number) => {
-        if (!startTime) startTime = time;
-        const elapsed = time - startTime;
-        let progress = 1.0 - Math.min(elapsed / duration, 1.0);
-
-        setShaderUniform(allTilesetIds, 'u_transitionProgress', progress);
-
-        if (progress > 0) {
-          transitionFrameId = requestAnimationFrame(animate);
-        } else {
-          removeShaderEffect(allTilesetIds);
-          activeEffect.value = null;
-          isTransitioning.value = false;
-          transitionFrameId = null;
-        }
-      };
-      transitionFrameId = requestAnimationFrame(animate);
-    } else {
-      removeShaderEffect(allTilesetIds);
-      activeEffect.value = null;
-      isTransitioning.value = false;
-    }
+  if (activeEffect.value === effectType || isTransitioning.value) {
+    // 当前效果已激活或正在过渡，关闭它 → 切换回3D模型
+    removeShaderEffect(allTilesetIds)
+    activeEffect.value = null
+    isTransitioning.value = false
   } else {
+    // 先播放扫描过渡动画，然后切换到目标效果
     if (activeEffect.value) {
-      removeShaderEffect(allTilesetIds);
+      removeShaderEffect(allTilesetIds)
     }
+    isTransitioning.value = true
+    applyShaderEffect(allTilesetIds, 'scanGradient')
 
-    isTransitioning.value = true;
-
-    if (effectType === 'xray') {
-      applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0]);
-      applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7);
-      applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7);
-      applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.7);
-      applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7);
-
-      setShaderUniform(allTilesetIds, 'u_transitionType', 1.0);
-      setShaderUniform(allTilesetIds, 'u_transitionProgress', 0.0);
-
-      const duration = 4500;
-      let startTime: number | null = null;
-
-      const animate = (time: number) => {
-        if (!startTime) startTime = time;
-        const elapsed = time - startTime;
-        let progress = Math.min(elapsed / duration, 1.0); // 0.0 -> 1.0 Wipe
-
-        setShaderUniform(allTilesetIds, 'u_transitionProgress', progress);
-
-        if (progress < 1.0) {
-          transitionFrameId = requestAnimationFrame(animate);
-        } else {
-          activeEffect.value = effectType;
-          isTransitioning.value = false;
-          transitionFrameId = null;
-        }
-      };
-      transitionFrameId = requestAnimationFrame(animate);
-    } else {
-      applyShaderEffect(allTilesetIds, effectType);
-      activeEffect.value = effectType;
-      isTransitioning.value = false;
-    }
+    // 扫描完一轮后自动切换到目标效果
+    // 扫描周期 ≈ (40 + 10) / (0.15 * 60) ≈ 5.5秒
+    transitionTimer = setTimeout(() => {
+      removeShaderEffect(allTilesetIds)
+      if (effectType === 'xray') {
+        // 不同管线使用不同颜色
+        applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0])
+        applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)
+        applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)
+        applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.7)
+        applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7)
+      } else {
+        applyShaderEffect(allTilesetIds, effectType)
+      }
+      activeEffect.value = effectType
+      isTransitioning.value = false
+      transitionTimer = null
+    }, 5500)
   }
 }
 let timer = null
@@ -153,8 +117,7 @@ onMounted(async () => {
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
 
   // 移除底图，设置深蓝色背景
-  // viewer.value.imageryLayers.removeAll();
-  viewer.value.scene.globe.show = false
+  viewer.value.imageryLayers.removeAll();
   viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1628');
   viewer.value.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628');
   // 关闭天空盒和大气效果，使用纯色背景
@@ -203,7 +166,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('resize', getScale)
   if (timer) clearInterval(timer)
-  if (transitionFrameId) cancelAnimationFrame(transitionFrameId)
+  if (transitionTimer) clearTimeout(transitionTimer)
 })
 
 function setupLocalTimeDisplay() {
@@ -252,6 +215,13 @@ const waitForAllTilesLoaded = () => {
 }
 
 const addAllModel = async () => {
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'noWallBuild',
+  //   label: 'noWallBuild',
+  //   type: 'model_3d_tiles',
+  //   url: 'modelTest/tileset.json',
+  // },
+  // )
   await gs3d.manager.layerManager.addLayer({
     id: 'noWallBuild',
     label: 'noWallBuild',
@@ -472,10 +442,10 @@ const pickPoint = () => {
         <!-- 左右刻度标签 -->
         <div class="helm-labels">
           <div class="label left" :class="{ active: activeEffect !== 'xray' && !isTransitioning }">
-            3D模型
+            3D 模型
           </div>
           <div class="label right" :class="{ active: activeEffect === 'xray' && !isTransitioning }">
-            网格模型
+            透视模型
           </div>
         </div>
 
