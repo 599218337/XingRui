@@ -84,21 +84,24 @@
     </div>
 
   </div>
-  <div v-if="videoPopupVisible" class="camera-video-popup"
-    :class="{ 'camera-video-popup--dual': !!currentSubCameraLabel }"
+  <div v-if="videoPopupVisible" class="camera-video-popup" ref="popupRef"
+    :class="{ 'camera-video-popup--dual': !!currentSubCameraLabel, 'camera-video-popup--maximized': isMaximized }"
     :style="{ top: popupPosition.y + 'px', left: popupPosition.x + 'px', transform: 'none' }">
-    <div class="camera-video-popup__header">
+    <div class="camera-video-popup__header" style="cursor: move;" @mousedown="startDrag">
       <span v-if="!currentSubCameraLabel">{{ currentCameraLabel || '实时预览' }}</span>
-      <button class="camera-video-popup__close" @click="closeVideoPopup"></button>
+      <div class="camera-video-popup__actions" @mousedown.stop>
+        <button class="camera-video-popup__maximize" @click="toggleMaximize" title="放大/缩小"></button>
+        <button class="camera-video-popup__close" @click="closeVideoPopup" title="关闭"></button>
+      </div>
     </div>
     <div class="camera-video-popup__body">
       <div class="camera-video-popup__video-item">
         <div class="camera-video-popup__video-label" v-if="currentSubCameraLabel">{{ currentCameraLabel }}</div>
-        <video ref="videoEl" controls autoplay muted></video>
+        <video ref="videoEl" autoplay muted></video>
       </div>
       <div class="camera-video-popup__video-item" v-if="currentSubCameraLabel">
         <div class="camera-video-popup__video-label">{{ currentSubCameraLabel }}</div>
-        <video ref="videoEl2" controls autoplay muted></video>
+        <video ref="videoEl2" autoplay muted></video>
       </div>
     </div>
   </div>
@@ -146,9 +149,77 @@ const videoEl2 = ref(null)
 const currentCameraLabel = ref('')
 const currentSubCameraLabel = ref('')
 const popupPosition = ref({ x: 0, y: 0 })
+const isMaximized = ref(false)
 let hlsInstance = null
 let hlsInstance2 = null
+const popupRef = ref(null)
 let screenEventHandler = null
+
+const toggleMaximize = () => {
+  isMaximized.value = !isMaximized.value
+}
+
+let isDragging = false
+// 记录鼠标按下时光标距离弹窗左上角的“逻辑像素相对偏移量”
+let dragOffset = { x: 0, y: 0 }
+
+const onMouseMove = (e) => {
+  if (!isDragging || !popupRef.value) return
+  requestAnimationFrame(() => {
+    if (!isDragging || !popupRef.value) return
+    const scaleX = window.innerWidth / 1920
+    const scaleY = window.innerHeight / 1080
+    // 新位置 = 鼠标视口坐标(还原缩放比例后) - 光标内部逻辑偏移量
+    const newX = (e.clientX / scaleX) - dragOffset.x
+    const newY = (e.clientY / scaleY) - dragOffset.y
+    // 直接操作原生 DOM
+    popupRef.value.style.left = `${newX}px`
+    popupRef.value.style.top = `${newY}px`
+    popupPosition.value = { x: newX, y: newY }
+  })
+}
+
+const onMouseUp = () => {
+  if (!isDragging) return
+  isDragging = false
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+}
+
+const startDrag = (e) => {
+  isDragging = true
+  if (postRender) {
+    postRender()
+    postRender = null
+  }
+
+  const scaleX = window.innerWidth / 1920
+  const scaleY = window.innerHeight / 1080
+
+  if (popupRef.value) {
+    const rect = popupRef.value.getBoundingClientRect()
+    // 获取当下的实际逻辑坐标（屏幕坐标 / 缩放比例）
+    const logicalLeft = rect.left / scaleX
+    const logicalTop = rect.top / scaleY
+
+    // 计算出还原缩放后的鼠标由于在弹窗内的点击点偏移量
+    dragOffset = {
+      x: (e.clientX / scaleX) - logicalLeft,
+      y: (e.clientY / scaleY) - logicalTop
+    }
+
+    // 强制清除 translateY 带来的偏移影响，固定当前的真实逻辑坐标
+    popupRef.value.style.transform = 'none'
+    popupRef.value.style.left = `${logicalLeft}px`
+    popupRef.value.style.top = `${logicalTop}px`
+    popupPosition.value = { x: logicalLeft, y: logicalTop }
+  } else {
+    dragOffset = { x: 0, y: 0 }
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
 
 let postRender = null
 

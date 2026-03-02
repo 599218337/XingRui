@@ -117,7 +117,8 @@ onMounted(async () => {
   viewer.value = gs3d.global.initViewer('mapContainer', defopt);
 
   // 移除底图，设置深蓝色背景
-  viewer.value.imageryLayers.removeAll();
+  // viewer.value.imageryLayers.removeAll();
+  viewer.value.scene.globe.show = false
   viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1628');
   viewer.value.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628');
   // 关闭天空盒和大气效果，使用纯色背景
@@ -219,7 +220,12 @@ const addAllModel = async () => {
   //   id: 'noWallBuild',
   //   label: 'noWallBuild',
   //   type: 'model_3d_tiles',
-  //   url: 'modelTest/tileset.json',
+  //   url: 'modelTest2/tileset.json',
+  //   setPosition: {
+  //     lng: 111.409370,
+  //     lat: 30.5546685,
+  //     height: -18,
+  //   },
   // },
   // )
   await gs3d.manager.layerManager.addLayer({
@@ -381,7 +387,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref">
 
-    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
+    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -442,10 +448,10 @@ const pickPoint = () => {
         <!-- 左右刻度标签 -->
         <div class="helm-labels">
           <div class="label left" :class="{ active: activeEffect !== 'xray' && !isTransitioning }">
-            3D 模型
+            3D模型
           </div>
           <div class="label right" :class="{ active: activeEffect === 'xray' && !isTransitioning }">
-            透视模型
+            网格模型
           </div>
         </div>
 

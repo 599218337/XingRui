@@ -302,9 +302,19 @@
   flex-direction: column;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   z-index: 20;
+  transition: width 0.3s ease, height 0.3s ease;
 
   &--dual {
     height: 460px;
+  }
+
+  &--maximized {
+    width: 720px;
+    height: 480px;
+
+    &.camera-video-popup--dual {
+      height: 920px;
+    }
   }
 
   video {
@@ -352,6 +362,24 @@
   color: #e4f2ff;
   font-size: 14px;
   font-weight: 600;
+  user-select: none;
+}
+
+.camera-video-popup__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.camera-video-popup__maximize {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #9ccfff;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 1px;
 }
 
 .camera-video-popup__close {
