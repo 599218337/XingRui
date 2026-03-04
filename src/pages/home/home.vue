@@ -162,6 +162,73 @@ onMounted(async () => {
   activeEffect.value = 'xray'
   isTransitioning.value = false
 
+
+  // 建立滑鼠事件處理器
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.value.scene.canvas);
+
+  // 儲存上一個被選中的部件，以便還原顏色
+  let highlightedFeature = undefined;
+  let originalColor = new Cesium.Color();
+
+  // 監聽滑鼠左鍵點擊事件
+  handler.setInputAction(function (movement) {
+    // 取得滑鼠點擊位置的物件
+    const picked = viewer.value.scene.pick(movement.position);
+
+    if (!Cesium.defined(picked)) return;
+
+    // 嘗試獲取 Cesium3DTileFeature（兼容 3D Tiles 1.0 和 1.1）
+    let pickedFeature = picked;
+    // 1.1 格式下 picked 可能是 { primitive, content, ... } 而非直接的 Feature
+    if (picked instanceof Cesium.Cesium3DTileFeature) {
+      pickedFeature = picked;
+    } else if (picked.content && picked.content instanceof Cesium.Cesium3DTileFeature) {
+      pickedFeature = picked.content;
+    }
+
+    // 如果點擊到了 3D Tiles 的某個具體部件 (Feature)
+    if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
+
+      // --- 1. 讀取該部位的屬性 ---
+      if (typeof pickedFeature.getPropertyIds === 'function') {
+        // Cesium 1.104+ 使用 getPropertyIds 替代 getPropertyNames
+        const propertyIds = pickedFeature.getPropertyIds();
+        console.log("該部件擁有的屬性:", propertyIds);
+      } else if (typeof pickedFeature.getPropertyNames === 'function') {
+        // 舊版 Cesium 使用 getPropertyNames
+        const propertyNames = pickedFeature.getPropertyNames();
+        console.log("該部件擁有的屬性:", propertyNames);
+      } else {
+        console.log("該部件無可讀取的屬性方法");
+      }
+
+      // 讀取特定屬性 (例如 name 或 id)
+      if (typeof pickedFeature.getProperty === 'function') {
+        const partName = pickedFeature.getProperty('name');
+        console.log("你點擊了:", partName);
+      }
+
+      // --- 2. 改變該部位的顏色 (高亮) ---
+      // 還原之前點擊的部件顏色
+      if (Cesium.defined(highlightedFeature)) {
+        highlightedFeature.color = originalColor;
+      }
+
+      // 紀錄當前部件和它的原始顏色
+      highlightedFeature = pickedFeature;
+      Cesium.Color.clone(pickedFeature.color, originalColor);
+
+      // 將點擊的部件變成黃色
+      pickedFeature.color = Cesium.Color.YELLOW;
+
+      // --- 3. 隱藏該部位 ---
+      // 如果你想點擊後直接隱藏它，可以這樣做：
+      // pickedFeature.show = false; 
+    } else {
+      console.log("點擊到的不是 3D Tiles Feature:", picked);
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
 })
 
 onUnmounted(() => {
@@ -216,97 +283,21 @@ const waitForAllTilesLoaded = () => {
 }
 
 const addAllModel = async () => {
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'noWallBuild',
-  //   label: 'noWallBuild',
-  //   type: 'model_3d_tiles',
-  //   url: 'modelTest2/tileset.json',
-  //   setPosition: {
-  //     lng: 111.409370,
-  //     lat: 30.5546685,
-  //     height: -18,
-  //   },
-  // },
-  // )
   await gs3d.manager.layerManager.addLayer({
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedfw_part/tileset.json',
+    url: 'modelTest2/tileset.json',
     setPosition: {
-      height: -13,
-      // height: 0,
+      lng: 111.409383,
+      lat: 30.554688,
+      height: -18,
     },
   },
   )
-  applyShaderEffect(['noWallBuild'], 'scanGradient')
 
 
-  await gs3d.manager.layerManager.addLayer({
-    id: 'wall',
-    label: 'wall',
-    type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
-    setPosition: {
-      height: -13,
-      // height: 0,
-    },
-    clampToGround: true,
-  },
-  )
-  applyShaderEffect(['wall'], 'scanGradient')
 
-  await gs3d.manager.layerManager.addLayer({
-    id: 'jyPipe',
-    label: 'jyPipe',
-    type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedjy/tileset.json',
-    setPosition: {
-      height: -13,
-      // height: 0,
-    },
-  },
-  )
-  applyShaderEffect(['jyPipe'], 'scanGradient')
-
-  await gs3d.manager.layerManager.addLayer({
-    id: 'lqPipe',
-    label: 'lqPipe',
-    type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedlq/tileset.json',
-    setPosition: {
-      height: -13,
-      // height: 0,
-    },
-  },
-  )
-  applyShaderEffect(['lqPipe'], 'scanGradient')
-
-  await gs3d.manager.layerManager.addLayer({
-    id: 'qqPipe',
-    label: 'qqPipe',
-    type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedqq/tileset.json',
-    setPosition: {
-      height: -13,
-      // height: 0,
-    },
-  },
-  )
-  applyShaderEffect(['qqPipe'], 'scanGradient')
-
-  await gs3d.manager.layerManager.addLayer({
-    id: 'ysPipe',
-    label: 'ysPipe',
-    type: 'model_3d_tiles',
-    url: '3dtileset_20251105/Batchedys/tileset.json',
-    setPosition: {
-      height: -13,
-      // height: 0,
-    },
-  },
-  )
-  applyShaderEffect(['ysPipe'], 'scanGradient')
   const noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
   await noWallEntry.layer.tileSet.readyPromise
   const boundingSphere = noWallEntry.layer.tileSet.boundingSphere
@@ -600,12 +591,10 @@ const pickPoint = () => {
   right: 0;
   top: 0;
   display: flex;
+}
 
-  //   animation-name:rightmove;
-  // animation-duration:1s;
-  // /* Safari and Chrome */
-  // -webkit-animation-name:rightmove;
-  // -webkit-animation-duration:1s;
+:deep(.cesium-infoBox) {
+  z-index: 2;
 }
 
 #map_tool {
@@ -616,6 +605,7 @@ const pickPoint = () => {
   // height: 168px;
   width: fit-content;
   height: fit-content;
+
 }
 
 .login {

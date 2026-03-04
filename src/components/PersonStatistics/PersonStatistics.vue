@@ -54,10 +54,6 @@
             }}</span></div>
         <div class="info-row"><span class="label">电话：</span><span class="value">{{ currentPerson?.tel || '无' }}</span>
         </div>
-        <div class="info-row"><span class="label">电量：</span><span class="value">{{ currentPerson?.electric || '未知'
-            }}</span></div>
-        <div class="info-row"><span class="label">时间：</span><span class="value">{{ currentPerson?.dateTime || '未知'
-            }}</span></div>
       </div>
     </div>
   </div>
@@ -310,8 +306,9 @@ const showAllPerson = (person) => {
     "type": "Point",
     "coordinates": [person.longitude, person.latitude, person.layer]
   }, {
-    entityId: 'person_' + person.empName,
+    graphicName: 'person_' + person.empName,
     billBoardOption: billBoardOption(person.empName),
+    showBillBoard: true,
     entityProperties: {
       deviceType: 'person',
       floor: 1,
