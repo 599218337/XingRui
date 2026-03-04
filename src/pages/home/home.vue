@@ -287,15 +287,94 @@ const addAllModel = async () => {
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: 'modelTest2/tileset.json',
+    url: 'model2/tileset.json',
     setPosition: {
       lng: 111.409383,
       lat: 30.554688,
-      height: -18,
+      height: -14,
     },
   },
   )
 
+  applyShaderEffect(['noWallBuild'], 'scanGradient')
+
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'noWallBuild',
+  //   label: 'noWallBuild',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedfw_part/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //   },
+  // },
+  // )
+
+  // applyShaderEffect(['noWallBuild'], 'scanGradient')
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'wall',
+  //   label: 'wall',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //     // height: 0,
+  //   },
+  //   clampToGround: true,
+  // },
+  // )
+  // applyShaderEffect(['wall'], 'scanGradient')
+
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'jyPipe',
+  //   label: 'jyPipe',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedjy/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //     // height: 0,
+  //   },
+  // },
+  // )
+  // applyShaderEffect(['jyPipe'], 'scanGradient')
+
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'lqPipe',
+  //   label: 'lqPipe',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedlq/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //     // height: 0,
+  //   },
+  // },
+  // )
+  // applyShaderEffect(['lqPipe'], 'scanGradient')
+
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'qqPipe',
+  //   label: 'qqPipe',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedqq/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //     // height: 0,
+  //   },
+  // },
+  // )
+  // applyShaderEffect(['qqPipe'], 'scanGradient')
+
+  // await gs3d.manager.layerManager.addLayer({
+  //   id: 'ysPipe',
+  //   label: 'ysPipe',
+  //   type: 'model_3d_tiles',
+  //   url: '3dtileset_20251105/Batchedys/tileset.json',
+  //   setPosition: {
+  //     height: -13,
+  //     // height: 0,
+  //   },
+  // },
+  // )
+  // applyShaderEffect(['ysPipe'], 'scanGradient')
 
 
   const noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')

@@ -13,7 +13,7 @@
     </div>
     <div class="content">
       <div class="left">
-        <div class="ltextItem" v-for="(item,index) in leftData">
+        <div class="ltextItem" v-for="(item, index) in leftData">
           <div class="text1">{{ item.label1 }}</div>
           <div class="text2">{{ item.label2 }}</div>
 
@@ -21,11 +21,11 @@
       </div>
       <div class="middle">
         <div class="text">
-          {{middleData}}
+          {{ middleData }}
         </div>
       </div>
       <div class="right">
-        <div class="rtextItem" v-for="(item,index) in rightData">
+        <div class="rtextItem" v-for="(item, index) in rightData">
           <div class="text1">{{ item.label1 }}</div>
           <div class="text2">{{ item.label2 }}</div>
 
@@ -43,39 +43,39 @@
 import { reactive } from 'vue';
 import { ref, watch, onMounted } from 'vue'
 
-const middleData=ref('文字跟着厂房名字')
-const leftData=reactive([
+const middleData = ref('兴瑞二期氯碱装置')
+const leftData = reactive([
   {
-    id:0,
-    label1:'温度',
-    label2:'25°C'
+    id: 0,
+    label1: '温度',
+    label2: '25°C'
   },
   {
-    id:1,
-    label1:'风速',
-    label2:'10m/s'
+    id: 1,
+    label1: '风速',
+    label2: '10m/s'
   },
   {
-    id:2,
-    label1:'污染指数',
-    label2:'PM2.5'
+    id: 2,
+    label1: '污染指数',
+    label2: 'PM2.5'
   }
 ])
-const rightData=reactive([
+const rightData = reactive([
   {
-    id:0,
-    label1:'湿度',
-    label2:'46%'
+    id: 0,
+    label1: '湿度',
+    label2: '46%'
   },
   {
-    id:1,
-    label1:'气压',
-    label2:'110kPa'
+    id: 1,
+    label1: '气压',
+    label2: '110kPa'
   },
   {
-    id:2,
-    label1:'空气质量',
-    label2:'542'
+    id: 2,
+    label1: '空气质量',
+    label2: '542'
   }
 ])
 
