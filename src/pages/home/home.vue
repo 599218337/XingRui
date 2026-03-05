@@ -54,7 +54,9 @@ const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
       removeShaderEffect(allTilesetIds)
       if (effectType === 'xray') {
         // 不同管线使用不同颜色
-        applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0])
+        // noWallBuild 是 1.1 模型，单独传入 gridFrequency 0.5 消除摩尔纹
+        applyShaderEffect(['noWallBuild'], 'xray', [0.0, 0.6, 1.0], 0.3, 10)
+        applyShaderEffect(['wall'], 'xray', [0.0, 0.6, 1.0])
         applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)
         applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)
         applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.7)
@@ -154,7 +156,9 @@ onMounted(async () => {
   await waitForAllTilesLoaded()
   // 全部瓦片加载完成，切换到 X-Ray 模式（不同模型不同颜色）
   removeShaderEffect(allTilesetIds)
-  applyShaderEffect(['noWallBuild', 'wall'], 'xray', [0.0, 0.6, 1.0]) // 青白色
+  // noWallBuild 是 1.1 模型，单独传入 gridFrequency 0.5 消除摩尔纹
+  applyShaderEffect(['noWallBuild'], 'xray', [0.0, 0.6, 1.0], 0.3, 10)
+  applyShaderEffect(['wall'], 'xray', [0.0, 0.6, 1.0]) // 青白色
   applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)       // 紫红色
   applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)       // 绿色
   applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.9)       // 深蓝色
@@ -296,7 +300,9 @@ const addAllModel = async () => {
   },
   )
 
-  applyShaderEffect(['noWallBuild'], 'scanGradient')
+  // 1.1 模型启动扫描特效时，也传入单独的频率参数 0.5
+  applyShaderEffect(['noWallBuild'], 'scanGradient', undefined, undefined, 10)
+
 
   // await gs3d.manager.layerManager.addLayer({
   //   id: 'noWallBuild',

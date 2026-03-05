@@ -70,6 +70,7 @@ export function createFresnelShader(
 export function createXRayShader(
     xrayColor: [number, number, number] = [0.0, 0.6, 1.0],
     opacity: number = 0.3,
+    gridFrequency: number = 20.0,
 ) {
     // opacity 控制：背面可见度 和 基础填充浓度
     const backfaceBase = Math.max(0.01, opacity * 0.8)
@@ -91,6 +92,10 @@ export function createXRayShader(
             u_alphaBoost: {
                 type: Cesium.UniformType.FLOAT,
                 value: alphaBoost,
+            },
+            u_gridFrequency: {
+                type: Cesium.UniformType.FLOAT,
+                value: gridFrequency,
             },
         },
         fragmentShaderText: `
@@ -116,11 +121,10 @@ export function createXRayShader(
         float scanBand = smoothstep(0.0, 0.2, abs(sin(scanY))) 
                        * smoothstep(0.0, 0.05, abs(cos(scanY * 0.5)));
 
-        // ============ 网格线（使用模型坐标 + 低频率） ============
-        // 改用 positionMC 使网格固定于模型表面，频率降到 4.0 消除摩尔纹
-        float gridLine = smoothstep(0.85, 1.0, abs(sin(positionMC.x * 20.0)))
-                       + smoothstep(0.85, 1.0, abs(sin(positionMC.y * 20.0)))
-                       + smoothstep(0.85, 1.0, abs(sin(positionMC.z * 20.0)));
+        // ============ 网格线（使用模型坐标 + 抽离的频率参数） ============
+        float gridLine = smoothstep(0.85, 1.0, abs(sin(positionMC.x * u_gridFrequency)))
+                       + smoothstep(0.85, 1.0, abs(sin(positionMC.y * u_gridFrequency)))
+                       + smoothstep(0.85, 1.0, abs(sin(positionMC.z * u_gridFrequency)));
         gridLine = clamp(gridLine, 0.0, 1.0) * 0.3;
 
         // ============ 颜色合成 ============
@@ -151,6 +155,7 @@ export function createScanGradientShader(
     maxHeight: number = 40.0,
     scanSpeed: number = 0.15,
     scanBandWidth: number = 1.5,
+    gridFrequency: number = 18.0,
 ) {
     return new Cesium.CustomShader({
         mode: Cesium.CustomShaderMode.REPLACE_MATERIAL,
@@ -172,6 +177,10 @@ export function createScanGradientShader(
             u_scanBandWidth: {
                 type: Cesium.UniformType.FLOAT,
                 value: scanBandWidth,
+            },
+            u_gridFrequency: {
+                type: Cesium.UniformType.FLOAT,
+                value: gridFrequency,
             },
         },
         fragmentShaderText: `
@@ -212,9 +221,9 @@ export function createScanGradientShader(
         vec3 scanCoreColor = mix(u_baseColor, vec3(1.0, 1.0, 1.0), 0.6);
 
         // ============ 4. 网格线 ============
-        float gridLine = smoothstep(0.88, 1.0, abs(sin(positionMC.x * 18.0)))
-                       + smoothstep(0.88, 1.0, abs(sin(positionMC.y * 18.0)))
-                       + smoothstep(0.88, 1.0, abs(sin(positionMC.z * 18.0)));
+        float gridLine = smoothstep(0.88, 1.0, abs(sin(positionMC.x * u_gridFrequency)))
+                       + smoothstep(0.88, 1.0, abs(sin(positionMC.y * u_gridFrequency)))
+                       + smoothstep(0.88, 1.0, abs(sin(positionMC.z * u_gridFrequency)));
         gridLine = clamp(gridLine, 0.0, 1.0) * 0.2;
 
         // ============ 5. 合成 ============
@@ -240,20 +249,23 @@ const originalShaders = new Map<string, any>()
  * @param tilesetIds 要应用效果的 tileset ID 数组
  * @param effectType 效果类型: 'fresnel' | 'xray' | 'scanGradient'
  * @param color 可选，自定义颜色 [r, g, b]，取值 0-1
+ * @param opacity 可选，透明度
+ * @param gridFrequency 可选，网格频率（用于适配 1.1 大坐标系模型，传入较小值如 0.5 消除摩尔纹）
  */
 export function applyShaderEffect(
     tilesetIds: string[],
     effectType: 'fresnel' | 'xray' | 'scanGradient',
     color?: [number, number, number],
     opacity?: number,
+    gridFrequency?: number,
 ) {
     let shader: any
     if (effectType === 'fresnel') {
         shader = createFresnelShader(color)
     } else if (effectType === 'xray') {
-        shader = createXRayShader(color, opacity)
+        shader = createXRayShader(color, opacity, gridFrequency)
     } else {
-        shader = createScanGradientShader(color)
+        shader = createScanGradientShader(color, undefined, undefined, undefined, gridFrequency)
     }
 
     for (const id of tilesetIds) {
