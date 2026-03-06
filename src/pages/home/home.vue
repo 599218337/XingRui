@@ -120,7 +120,7 @@ onMounted(async () => {
 
   // 移除底图，设置深蓝色背景
   // viewer.value.imageryLayers.removeAll();
-  viewer.value.scene.globe.show = false
+  // viewer.value.scene.globe.show = false
   viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1628');
   viewer.value.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628');
   // 关闭天空盒和大气效果，使用纯色背景
@@ -291,12 +291,7 @@ const addAllModel = async () => {
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: 'model2/tileset.json',
-    setPosition: {
-      lng: 111.409383,
-      lat: 30.554688,
-      height: -14,
-    },
+    url: 'model4/tileset.json',
   },
   )
 

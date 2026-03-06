@@ -70,22 +70,40 @@
         .Item {
           display: inline-flex;
           align-items: center;
-          width: calc(100% - 20px);
+          width: 78%;
+
+          .point {
+            width: 7px;
+            height: 7px;
+            border-radius: 25px;
+            margin: 0 14px;
+            flex-shrink: 0;
+          }
 
           .text {
-            margin-left: 14px;
             font-size: 12px;
             font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
             font-weight: normal;
             color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
 
         .icon {
-          width: 7px;
-          height: 12px;
-          background: url("/image/dsj.png");
-          background-size: 100% 100%;
+          width: 20%;
+          display: inline-flex;
+          justify-content: flex-end;
+          align-items: center;
+
+          .view {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            background: url("/image/item_view.png");
+            background-size: 100% 100%;
+          }
         }
       }
     }

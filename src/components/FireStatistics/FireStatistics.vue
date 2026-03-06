@@ -10,15 +10,22 @@
   <div class="fireStatistics">
     <div class="widget">
       <div class="header">
-        <span>地名注记</span>
+        <span>设备列表</span>
       </div>
       <div class="content">
-        <div class="contentItem" v-for="(item, index) in store.state.fireArray" @click="location(item)">
-          <div class="Item">
-            <div class="text">{{ item.label }}</div>
+        <template v-for="item in devicePVList" :key="item.id">
+          <div class="contentItem">
+            <div class="Item" :title="item.name">
+              <div class="point" style="background: #00FF7A"></div>
+              <div class="text">{{ item.name }}</div>
+            </div>
+            <div class="icon">
+              <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
+                <div class="view" @click.stop="queryDeviceData(item)"></div>
+              </el-tooltip>
+            </div>
           </div>
-          <div class="icon"></div>
-        </div>
+        </template>
 
       </div>
       <div class="line"></div>
@@ -34,8 +41,9 @@
 import { ref, watch, onMounted } from 'vue'
 import { useStore } from "vuex";
 const store = useStore();
-import { ElMessage } from 'element-plus';
-
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { devicePVList } from './devicesPVList';
+import { fetchDeviceData } from './start';
 
 onMounted(() => {
 })
@@ -51,25 +59,42 @@ const showContentFuc = () => {
   showContent.value = !showContent.value
 }
 
-const location = (val) => {
-  if (!val.coord) {
+const queryDeviceData = async (val) => {
+  if (!val.id) {
     ElMessage({
       type: 'warning',
-      message: `${val.label}坐标点缺失！`
+      message: `${val.name}数据缺失！`
     })
     return
   }
-  let jsondata = {
-    "id": "fire_" + val.id,             //覆盖物id
-    "covering_type": (val.type == "around" || val.type == 'gate') ? "scene_effect" : (val.type == "road" ? "3d_text" : "poi"),     //覆盖物类型, 详见下表
-    "distance": val.type == 'road' ? 300 : 80           //距离(单位:米), 默认20米
+
+  try {
+    const value = await fetchDeviceData(val.id)
+    ElMessageBox.alert(
+      `<strong>设备名称：</strong>${val.name}<br/><strong>当前值：</strong>${value}`,
+      '设备数据',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定'
+      }
+    )
+  } catch (err) {
+    ElMessage({
+      type: 'error',
+      message: err.message || '获取数据失败'
+    })
   }
-  cloudRender.SuperAPI("FocusCovering", jsondata, (status) => {
-    console.log(status); //成功、失败回调
-  })
 }
 </script>
 
 <style lang="scss" scoped>
 @import url('./FireStatistics.scss');
+</style>
+
+<style lang="scss">
+.iconTooltip {
+  background-color: rgba(39, 53, 70, 1) !important;
+  border: 1px solid rgba(12, 137, 234, 0.40) !important;
+  border-radius: 2px !important;
+}
 </style>
