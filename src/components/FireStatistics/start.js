@@ -44,7 +44,7 @@ function calculateSignature(method, uri, query = {}, headers = {}) {
 
 export async function fetchDeviceData(id) {
     // 构造查询的 inputKey
-    const inputKey = "system.RemoteCollector.supos.system._" + id;
+    const inputKey = "system.RemoteCollector.supos.system." + id;
 
     const testParams = {
         method: 'POST',

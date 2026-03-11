@@ -440,7 +440,7 @@ const pickPoint = () => {
     <!-- 设备信息 -->
     <Transition name="slide-fade3">
       <div class="left_wrapper_camera" v-if="store.state.showDevices">
-        <devicesListPoi></devicesListPoi>
+        <devicesListPoi :viewer="viewer"></devicesListPoi>
       </div>
     </Transition>
     <!-- 消防位置 -->

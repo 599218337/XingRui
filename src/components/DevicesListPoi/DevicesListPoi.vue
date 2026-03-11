@@ -7,10 +7,14 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div class="cameraStatistics">
+  <div class="cameraStatistics"
+    :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
     <div class="widget">
       <div class="header">
         <span>设备统计</span>
+      </div>
+      <div class="searchBox">
+        <el-input v-model="searchModelName" placeholder="请输入关键字进行过滤" clearable />
       </div>
       <div class="content">
         <template v-for="(items, category) in groupedDeviceList" :key="category">
@@ -34,7 +38,9 @@
       <div class="line"></div>
 
     </div>
-    <div id="cameraBtn" @click="showContentFuc"> </div>
+    <div id="cameraBtn" @click="showContentFuc"
+      :style="{ background: showContent ? 'url(/image/shouqi.png)' : 'url(/image/zhankai.png)', backgroundSize: '100% 100%' }">
+    </div>
 
 
   </div>
@@ -119,15 +125,26 @@
 import { ElMessage } from 'element-plus';
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from "vuex";
+import axios from 'axios';
 const store = useStore();
 
 import emitter from '@/utils/bus'
 import { deviceList } from './deviceList'
+import * as gs3d from '/public/gs3d/index'
 
+const { viewer } = defineProps(['viewer'])
 // 按 categoryName 分组
 const groupedDeviceList = computed(() => {
   const groups = {}
   deviceList.forEach(item => {
+    const keyword = searchModelName.value ? searchModelName.value.toLowerCase() : ''
+    if (keyword) {
+      const matchTag = item.tagNumber && item.tagNumber.toLowerCase().includes(keyword)
+      const matchDesc = item.description && item.description.toLowerCase().includes(keyword)
+      if (!matchTag && !matchDesc) {
+        return // skip this item
+      }
+    }
     const key = item.categoryName || '其他'
     if (!groups[key]) groups[key] = []
     groups[key].push(item)
@@ -139,46 +156,182 @@ const groupedDeviceList = computed(() => {
 const deviceDetailVisible = ref(false)
 const currentDevice = ref(null)
 
-const showDeviceDetail = (item) => {
+const showDeviceDetail = async (item) => {
   currentDevice.value = item
   deviceDetailVisible.value = true
+  focusModelByName(item)
+
+  // 模拟请求网格数据并渲染
+  const gridData = await axios.get(`zwyl/grid/model?modelName=${item.tagName}&level=24&demTag=false`)
+  if (gridData.data) {
+    renderGrid(gridData.data)
+  }
 }
 
 const closeDeviceDetail = () => {
   deviceDetailVisible.value = false
   currentDevice.value = null
+  clearGrid()
+}
+
+
+const gridEntities = []
+
+const renderGrid = (data) => {
+  clearGrid()
+
+
+  const { gridPoints, height, propertyList } = data
+
+  gridPoints.forEach((pointArr) => {
+    // 数据格式推断：[minLat, minLon, maxLat, maxLon]
+    const south = pointArr[0]
+    const west = pointArr[1]
+    const north = pointArr[2]
+    const east = pointArr[3]
+    const rect = gs3d.Cesium.Rectangle.fromDegrees(west, south, east, north)
+
+    const levelCount = propertyList && propertyList.length > 0 ? propertyList.length : 1
+    const baseHeight = height || 20
+
+    for (let i = 0; i < levelCount; i++) {
+      let currentBottomHeight = i * baseHeight
+      let currentTopHeight = (i + 1) * baseHeight
+
+      // 实体容积主体 (半透明科技感面填充)
+      const entity = viewer.entities.add({
+        rectangle: {
+          coordinates: rect,
+          height: currentBottomHeight,
+          extrudedHeight: currentTopHeight,
+          material: new gs3d.Cesium.ColorMaterialProperty(
+            gs3d.Cesium.Color.fromCssColorString('rgba(0, 255, 255, 0.25)')
+          )
+        }
+      })
+
+      // 底部发光边框
+      const outlineBottom = viewer.entities.add({
+        polyline: {
+          positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
+            west, south, currentBottomHeight,
+            east, south, currentBottomHeight,
+            east, north, currentBottomHeight,
+            west, north, currentBottomHeight,
+            west, south, currentBottomHeight
+          ]),
+          width: 5,
+          material: new gs3d.Cesium.PolylineGlowMaterialProperty({
+            glowPower: 0.3,
+            color: gs3d.Cesium.Color.CYAN
+          })
+        }
+      })
+
+      // 顶部发光边框
+      const outlineTop = viewer.entities.add({
+        polyline: {
+          positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
+            west, south, currentTopHeight,
+            east, south, currentTopHeight,
+            east, north, currentTopHeight,
+            west, north, currentTopHeight,
+            west, south, currentTopHeight
+          ]),
+          width: 5,
+          material: new gs3d.Cesium.PolylineGlowMaterialProperty({
+            glowPower: 0.3,
+            color: gs3d.Cesium.Color.CYAN
+          })
+        }
+      })
+
+      // 4条垂直高亮棱边
+      const drawVertical = (lon, lat) => {
+        return viewer.entities.add({
+          polyline: {
+            positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
+              lon, lat, currentBottomHeight,
+              lon, lat, currentTopHeight
+            ]),
+            width: 5,
+            material: new gs3d.Cesium.PolylineGlowMaterialProperty({
+              glowPower: 0.3,
+              color: gs3d.Cesium.Color.CYAN
+            })
+          }
+        })
+      }
+
+      gridEntities.push(
+        entity, outlineBottom, outlineTop,
+        drawVertical(west, south),
+        drawVertical(east, south),
+        drawVertical(east, north),
+        drawVertical(west, north)
+      )
+    }
+  })
+
+  // 视角飞向新渲染的网格，调整以展现立体感
+  viewer.flyTo(gridEntities, {
+    offset: new gs3d.Cesium.HeadingPitchRange(
+      gs3d.Cesium.Math.toRadians(0),
+      gs3d.Cesium.Math.toRadians(-35),
+      150
+    ),
+    duration: 2.0
+  })
+}
+
+const clearGrid = () => {
+
+  gridEntities.forEach(entity => {
+    if (entity) viewer.entities.remove(entity)
+  })
+  gridEntities.length = 0
+}
+
+const searchModelName = ref('')
+
+const focusModelByName = (item) => {
+  const entry = gs3d.global.variable.gs3dAllLayer.find((layerItem) => layerItem.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (!tileset) {
+    ElMessage.error('模型未加载')
+    return
+  }
+
+  // 使用 3D Tiles 样式高亮指定的模型 (基于 name 或 id 属性), 支持模糊查询
+  const nameToFind = item.tagName || item.tagNumber;
+  if (!nameToFind) return;
+
+  tileset.style = new gs3d.Cesium.Cesium3DTileStyle({
+    color: {
+      conditions: [
+        [`regExp('.*${nameToFind}.*').test(\${name})`, "color('yellow', 1.0)"],
+        [`regExp('.*${nameToFind}.*').test(\${id})`, "color('yellow', 1.0)"],
+        // 恢复原有基础颜色逻辑
+        ["regExp('^jy_').test(${name})", "color('#CC0099')"],
+        ["regExp('^lq_').test(${name})", "color('#00CC33')"],
+        ["regExp('^qq_').test(${name})", "color('#1933CC')"],
+        ["regExp('^ys_').test(${name})", "color('#FFCC00')"],
+        ["true", "color('#0099FF')"]
+      ]
+    }
+  });
+
+  ElMessage.success(`已高亮模型: ${nameToFind}`);
 }
 
 onMounted(() => {
+  setTimeout(() => {
+    showContent.value = true
+  }, 100) // slight delay to allow DOM to render first, then apply transition
 })
 const showContent = ref(false)
 const showContentFuc = () => {
-  let p = showContent.value ? 0 : 374
-  let t = showContent.value ? 0.5 : 0.5
-  let b = showContent.value ? 'url("/image/zhankai.png")' : 'url("/image/shouqi.png")'
-  document.getElementsByClassName('cameraStatistics')[0].style.transform = `translateX(${p}px)`
-  document.getElementsByClassName('cameraStatistics')[0].style.transition = `transform ${t}s`
-  document.getElementById('cameraBtn').style.background = b
-  document.getElementById('cameraBtn').style.backgroundSize = '100% 100%'
   showContent.value = !showContent.value
-}
-
-const location = (val) => {
-  if (!val.coord) {
-    ElMessage({
-      type: 'warning',
-      message: `${val.label}坐标点缺失！`
-    })
-    return
-  }
-  let jsondata = {
-    "id": 'camera_' + val.id,             //覆盖物id
-    "covering_type": "poi",     //覆盖物类型, 详见下表
-    "distance": 10           //距离(单位:米), 默认20米
-  }
-  cloudRender.SuperAPI("FocusCovering", jsondata, (status) => {
-    console.log(status); //成功、失败回调
-  })
 }
 
 const showEdit1 = ref(false)
@@ -194,7 +347,7 @@ const editPoi = (val) => {
 
   }
   if (val.coord) {
-    location(val)
+    // 之前是调用云渲染 location 定位
     showEdit1.value = false
     showEdit2.value = true
     emitter.emit('transform', cameraEditData);
@@ -245,51 +398,7 @@ emitter.on('completeCamera', (val) => {
 //   emitter.emit('transform', type);
 // }
 
-const addPerson = () => {
 
-
-  store.state.devicesMap.forEach((item) => {
-    addCustomPOI({
-      id: 'devices_' + item.ClientId,
-      coord: item.location,
-      coord_z: item.coord_z || 0,
-      coord_z_type: item.coord_z_type || 0,
-      always_show_label: true,
-      marker: {
-        size: "62,78",
-        images: [
-          {
-            "define_state": "state_1",
-            "normal_url": CONFIG.fileUrl + "/images/工人.png",
-            "activate_url": CONFIG.fileUrl + "/images/工人.png"
-          }
-        ]
-      },
-      label: {},
-      window: {
-        url: CONFIG.fileUrl + "/html/person.html?id=" + item.label + "&time=" + new Date().getTime(),
-        size: "326,168",
-        offset: "-163,246"
-      }
-
-    })
-  })
-}
-
-
-const addCustomPOI = (objJson) => {
-  cloudRender.SuperAPI("AddCustomPOI", { ...CONFIG.customJson, ...objJson })
-
-}
-
-const removeCustomPOI = () => {
-  let jsondata = {
-    covering_type: "all"
-  }
-  cloudRender.SuperAPI("RemoveAllCovering", jsondata, (status) => {
-    // console.log(status); //成功、失败回调
-  })
-}
 </script>
 
 <style lang="scss" scoped>

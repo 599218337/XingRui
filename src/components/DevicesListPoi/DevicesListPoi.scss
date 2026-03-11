@@ -48,9 +48,28 @@
       }
     }
 
+    .searchBox {
+      padding: 10px 14px 0 14px;
+      width: 100%;
+      box-sizing: border-box;
+
+      :deep(.el-input__wrapper) {
+        background-color: rgba(19, 44, 69, 0.4);
+        box-shadow: 0 0 0 1px rgba(12, 137, 234, 0.4) inset;
+
+        .el-input__inner {
+          color: #fff;
+
+          &::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+          }
+        }
+      }
+    }
+
     .content {
       width: 100%;
-      height: calc(100% - 40px);
+      height: calc(100% - 85px);
       background: rgba(8, 15, 24, 0.4);
       display: inline-block;
       padding: 14px;
@@ -290,8 +309,8 @@
 .device-detail-popup {
   position: fixed;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  right: 24px;
+  transform: translateY(-50%);
   width: 420px;
   max-height: 80vh;
   background: rgba(19, 44, 69, 0.95);

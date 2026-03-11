@@ -42,7 +42,13 @@ export default defineConfig({
       "/open-api/supos": {
         target: 'http://10.253.31.1:8080',
         changeOrigin: true
+      },
+      "/zwyl": {
+        target: 'http://172.16.8.25:8892/',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/zwyl/, '')
       }
+
     }
   }
 })

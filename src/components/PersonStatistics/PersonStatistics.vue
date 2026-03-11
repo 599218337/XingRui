@@ -7,7 +7,8 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div class="personStatistics">
+  <div class="personStatistics"
+    :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
     <div class="widget">
       <div class="header">
         <span>人员定位</span>
@@ -33,7 +34,9 @@
 
 
     </div>
-    <div id="personBtn" @click="showContentFuc"> </div>
+    <div id="personBtn" @click="showContentFuc"
+      :style="{ background: showContent ? 'url(/image/shouqi.png)' : 'url(/image/zhankai.png)', backgroundSize: '100% 100%' }">
+    </div>
 
 
     <div v-if="personPopupVisible" class="person-info-popup" ref="popupRef"
@@ -317,13 +320,12 @@ const showAllPerson = (person) => {
 }
 
 const showContent = ref(false)
+onMounted(() => {
+  setTimeout(() => {
+    showContent.value = true
+  }, 100)
+})
 const showContentFuc = () => {
-  let p = showContent.value ? 0 : 374
-  let b = showContent.value ? 'url("/image/zhankai.png")' : 'url("/image/shouqi.png")'
-  document.getElementsByClassName('personStatistics')[0].style.transform = `translateX(${p}px)`
-  document.getElementsByClassName('personStatistics')[0].style.transition = `transform 0.5s`
-  document.getElementById('personBtn').style.background = b
-  document.getElementById('personBtn').style.backgroundSize = '100% 100%'
   showContent.value = !showContent.value
 }
 
