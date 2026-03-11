@@ -25,57 +25,74 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from 'vue'
+import { ref, reactive, watch, nextTick, onMounted } from 'vue'
 
 import { ElMessage } from 'element-plus'
 import * as gs3d from '/public/gs3d/index';
+const { Cesium } = gs3d
 const showView = ref(false)
-let noWallEntry, jyPipeEntry, lqPipeEntry, qqPipeEntry, ysPipeEntry, buildingEntry
+
+// 各管线/建筑的可见性状态（true = 显示）
+const visibility = reactive({
+  jy: true,   // 给水管
+  lq: true,   // 冷却管
+  qq: true,   // 蒸汽管
+  ys: true,   // 雨水管
+  building: true, // 建筑/墙体（其他）
+})
+
+// 根据 visibility 状态，重新设置 noWallBuild 的 Cesium3DTileStyle show 条件
+const updateVisibilityStyle = () => {
+  const entry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (!tileset) return
+
+  // 构建 show 条件：按 name 前缀判断是否显示
+  const conditions = []
+  if (!visibility.jy) conditions.push(["regExp('^jy_').test(${name})", "false"])
+  if (!visibility.lq) conditions.push(["regExp('^lq_').test(${name})", "false"])
+  if (!visibility.qq) conditions.push(["regExp('^qq_').test(${name})", "false"])
+  if (!visibility.ys) conditions.push(["regExp('^ys_').test(${name})", "false"])
+  if (!visibility.building) conditions.push(["regExp('^lm_').test(${name})", "false"])
+
+
+  // 保留已有的 color 条件（如果有的话），只更新 show
+  const existingStyle = tileset.style
+  const colorConditions = existingStyle?._style?.color?.conditions
+
+  const styleObj = { show: { conditions } }
+  if (colorConditions) {
+    styleObj.color = { conditions: colorConditions }
+  }
+
+  tileset.style = new Cesium.Cesium3DTileStyle(styleObj)
+}
 
 const viewShow = () => {
   showView.value = !showView.value
-  if (!noWallEntry) {
-    noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
-  }
-  if (!jyPipeEntry) {
-    jyPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'jyPipe')
-  }
-  if (!lqPipeEntry) {
-    lqPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'lqPipe')
-  }
-  if (!qqPipeEntry) {
-    qqPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'qqPipe')
-  }
-  if (!ysPipeEntry) {
-    ysPipeEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'ysPipe')
-  }
-  if (!buildingEntry) {
-    buildingEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'wall')
-  }
 }
 
 const viewChange = (type) => {
-
   switch (type) {
     case 1:
-      jyPipeEntry.layer.tileSet.show = !jyPipeEntry.layer.tileSet.show
+      visibility.jy = !visibility.jy
       break;
     case 2:
-      lqPipeEntry.layer.tileSet.show = !lqPipeEntry.layer.tileSet.show
+      visibility.lq = !visibility.lq
       break;
     case 3:
-      qqPipeEntry.layer.tileSet.show = !qqPipeEntry.layer.tileSet.show
+      visibility.qq = !visibility.qq
       break;
     case 4:
-      ysPipeEntry.layer.tileSet.show = !ysPipeEntry.layer.tileSet.show
+      visibility.ys = !visibility.ys
       break;
     case 5:
-      buildingEntry.layer.tileSet.show = !buildingEntry.layer.tileSet.show
+      visibility.building = !visibility.building
       break;
     default:
       break;
   }
-
+  updateVisibilityStyle()
 }
 const activeKey = () => {
   cloudRender.SuperAPI("keyboard");

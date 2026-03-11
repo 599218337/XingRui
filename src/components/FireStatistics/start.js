@@ -65,10 +65,9 @@ export async function fetchDeviceData(id) {
         testParams.headers
     )
 
-    // 构建请求 URL
-    const baseUrl = 'http://10.253.31.1:8080'
+    // 构建请求 URL (通过 Vite 开发服务器代理解决跨域)
     const queryString = new URLSearchParams(testParams.query).toString()
-    const fullUrl = `${baseUrl}${testParams.uri}${queryString ? '?' + queryString : ''}`
+    const fullUrl = `${testParams.uri}${queryString ? '?' + queryString : ''}`
 
     // 发送请求
     const response = await fetch(fullUrl, {

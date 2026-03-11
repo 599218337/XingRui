@@ -38,6 +38,10 @@ export default defineConfig({
         target: 'http://10.32.10.61:443/',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/camera-locate/, '')
+      },
+      "/open-api/supos": {
+        target: 'http://10.253.31.1:8080',
+        changeOrigin: true
       }
     }
   }

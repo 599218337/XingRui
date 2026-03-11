@@ -26,7 +26,7 @@ const isTransitioning = ref(false)
 let transitionTimer: ReturnType<typeof setTimeout> | null = null
 
 // 所有 3D Tiles 的 ID
-const allTilesetIds = ['noWallBuild', 'wall', 'jyPipe', 'lqPipe', 'qqPipe', 'ysPipe']
+const allTilesetIds = ['noWallBuild']
 
 const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
   // 清除正在进行的过渡动画
@@ -38,12 +38,14 @@ const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
   if (activeEffect.value === effectType || isTransitioning.value) {
     // 当前效果已激活或正在过渡，关闭它 → 切换回3D模型
     removeShaderEffect(allTilesetIds)
+    removePerFeatureColors()
     activeEffect.value = null
     isTransitioning.value = false
   } else {
     // 先播放扫描过渡动画，然后切换到目标效果
     if (activeEffect.value) {
       removeShaderEffect(allTilesetIds)
+      removePerFeatureColors()
     }
     isTransitioning.value = true
     applyShaderEffect(allTilesetIds, 'scanGradient')
@@ -53,14 +55,9 @@ const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
     transitionTimer = setTimeout(() => {
       removeShaderEffect(allTilesetIds)
       if (effectType === 'xray') {
-        // 不同管线使用不同颜色
-        // noWallBuild 是 1.1 模型，单独传入 gridFrequency 0.5 消除摩尔纹
-        applyShaderEffect(['noWallBuild'], 'xray', [0.0, 0.6, 1.0], 0.3, 10)
-        applyShaderEffect(['wall'], 'xray', [0.0, 0.6, 1.0])
-        applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)
-        applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)
-        applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.7)
-        applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7)
+        // 白色 xray 基础色 + Cesium3DTileStyle 按 name 前缀对不同管线上色
+        applyShaderEffect(['noWallBuild'], 'xray', [1.0, 1.0, 1.0], 0.5, 10)
+        applyPerFeatureColors()
       } else {
         applyShaderEffect(allTilesetIds, effectType)
       }
@@ -120,7 +117,7 @@ onMounted(async () => {
 
   // 移除底图，设置深蓝色背景
   // viewer.value.imageryLayers.removeAll();
-  // viewer.value.scene.globe.show = false
+  viewer.value.scene.globe.show = false
   viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1628');
   viewer.value.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628');
   // 关闭天空盒和大气效果，使用纯色背景
@@ -156,13 +153,9 @@ onMounted(async () => {
   await waitForAllTilesLoaded()
   // 全部瓦片加载完成，切换到 X-Ray 模式（不同模型不同颜色）
   removeShaderEffect(allTilesetIds)
-  // noWallBuild 是 1.1 模型，单独传入 gridFrequency 0.5 消除摩尔纹
-  applyShaderEffect(['noWallBuild'], 'xray', [0.0, 0.6, 1.0], 0.3, 10)
-  applyShaderEffect(['wall'], 'xray', [0.0, 0.6, 1.0]) // 青白色
-  applyShaderEffect(['jyPipe'], 'xray', [0.8, 0.0, 0.6], 0.7)       // 紫红色
-  applyShaderEffect(['lqPipe'], 'xray', [0.0, 0.8, 0.2], 0.7)       // 绿色
-  applyShaderEffect(['qqPipe'], 'xray', [0.1, 0.2, 0.8], 0.9)       // 深蓝色
-  applyShaderEffect(['ysPipe'], 'xray', [1.0, 0.8, 0.0], 0.7)       // 黄色
+  // 白色 xray 基础色 + Cesium3DTileStyle 按 name 前缀对不同管线上色
+  applyShaderEffect(['noWallBuild'], 'xray', [1.0, 1.0, 1.0], 0.5, 10)
+  applyPerFeatureColors()
   activeEffect.value = 'xray'
   isTransitioning.value = false
 
@@ -265,6 +258,34 @@ function setupLocalTimeDisplay() {
 }
 
 
+// 根据 feature 的 name 前缀，为 noWallBuild 中不同管线设置不同颜色
+const applyPerFeatureColors = () => {
+  const entry = gs3d.global.variable.gs3dAllLayer.find((item: any) => item.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (tileset) {
+    tileset.style = new Cesium.Cesium3DTileStyle({
+      color: {
+        conditions: [
+          ["regExp('^jy_').test(${name})", "color('#CC0099')"],   // 紫红色 - 给水管
+          ["regExp('^lq_').test(${name})", "color('#00CC33')"],   // 绿色   - 冷却管
+          ["regExp('^qq_').test(${name})", "color('#1933CC')"],   // 深蓝色 - 蒸汽管
+          ["regExp('^ys_').test(${name})", "color('#FFCC00')"],   // 黄色   - 雨水管
+          ["true", "color('#0099FF')"]                            // 默认青白色 - 建筑/墙体
+        ]
+      }
+    })
+  }
+}
+
+// 移除 noWallBuild 上的 per-feature 着色样式
+const removePerFeatureColors = () => {
+  const entry = gs3d.global.variable.gs3dAllLayer.find((item: any) => item.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (tileset) {
+    tileset.style = undefined
+  }
+}
+
 // 等待所有 tileset 的实际瓦片（b3dm）加载完毕
 const waitForAllTilesLoaded = () => {
   return new Promise<void>((resolve) => {
@@ -291,7 +312,7 @@ const addAllModel = async () => {
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: 'model4/tileset.json',
+    url: 'model5/tileset.json',
   },
   )
 
@@ -299,83 +320,6 @@ const addAllModel = async () => {
   applyShaderEffect(['noWallBuild'], 'scanGradient', undefined, undefined, 10)
 
 
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'noWallBuild',
-  //   label: 'noWallBuild',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedfw_part/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //   },
-  // },
-  // )
-
-  // applyShaderEffect(['noWallBuild'], 'scanGradient')
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'wall',
-  //   label: 'wall',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedfw_qiang4/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //     // height: 0,
-  //   },
-  //   clampToGround: true,
-  // },
-  // )
-  // applyShaderEffect(['wall'], 'scanGradient')
-
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'jyPipe',
-  //   label: 'jyPipe',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedjy/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //     // height: 0,
-  //   },
-  // },
-  // )
-  // applyShaderEffect(['jyPipe'], 'scanGradient')
-
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'lqPipe',
-  //   label: 'lqPipe',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedlq/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //     // height: 0,
-  //   },
-  // },
-  // )
-  // applyShaderEffect(['lqPipe'], 'scanGradient')
-
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'qqPipe',
-  //   label: 'qqPipe',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedqq/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //     // height: 0,
-  //   },
-  // },
-  // )
-  // applyShaderEffect(['qqPipe'], 'scanGradient')
-
-  // await gs3d.manager.layerManager.addLayer({
-  //   id: 'ysPipe',
-  //   label: 'ysPipe',
-  //   type: 'model_3d_tiles',
-  //   url: '3dtileset_20251105/Batchedys/tileset.json',
-  //   setPosition: {
-  //     height: -13,
-  //     // height: 0,
-  //   },
-  // },
-  // )
-  // applyShaderEffect(['ysPipe'], 'scanGradient')
 
 
   const noWallEntry = gs3d.global.variable.gs3dAllLayer.find(item => item.id === 'noWallBuild')
@@ -458,7 +402,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref">
 
-    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
+    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
