@@ -162,7 +162,7 @@ const showDeviceDetail = async (item) => {
   focusModelByName(item)
 
   // 模拟请求网格数据并渲染
-  const gridData = await axios.get(`zwyl/grid/model?modelName=${item.tagName}&level=24&demTag=false`)
+  const gridData = await axios.get(`zwyl/grid/model?modelName=${item.tagName}&demTag=false`)
   if (gridData.data) {
     renderGrid(gridData.data)
   }
@@ -175,121 +175,124 @@ const closeDeviceDetail = () => {
 }
 
 
-const gridEntities = []
+// ── 网格渲染（Primitive API，纯笛卡尔几何，对标 Three.js BufferGeometry） ──
+let gridPrimitives = []
 
 const renderGrid = (data) => {
   clearGrid()
 
+  const Cesium = gs3d.Cesium
+  const { gridPoints, height: gridH, propertyList } = data
+  if (!gridPoints?.length || !propertyList?.length) return
 
-  const { gridPoints, height, propertyList } = data
+  const R = 6378137 // WGS84 长半轴
+  const faceInstances = []
+  const outlineInstances = []
+  const flyToPositions = []
 
-  gridPoints.forEach((pointArr) => {
-    // 数据格式推断：[minLat, minLon, maxLat, maxLon]
-    const south = pointArr[0]
-    const west = pointArr[1]
-    const north = pointArr[2]
-    const east = pointArr[3]
-    const rect = gs3d.Cesium.Rectangle.fromDegrees(west, south, east, north)
+  propertyList.forEach((layerProps, layerIdx) => {
+    // 每层颜色从青→蓝渐变，与 HTML 保持一致
+    const t = propertyList.length > 1 ? layerIdx / (propertyList.length - 1) : 0
+    const g = Math.round(t * 0x88 + (1 - t) * 0xd4)
+    const faceColor = new Cesium.Color(0, g / 255, 1.0, 0.25)
 
-    const levelCount = propertyList && propertyList.length > 0 ? propertyList.length : 1
-    const baseHeight = height || 20
+    layerProps.forEach((prop) => {
+      const idx = prop.serialNumber
+      if (idx >= gridPoints.length) return
 
-    for (let i = 0; i < levelCount; i++) {
-      let currentBottomHeight = i * baseHeight
-      let currentTopHeight = (i + 1) * baseHeight
+      const pt = gridPoints[idx]
+      // 数据格式：[minLat, minLon, maxLat, maxLon]
+      const south = pt[0], west = pt[1], north = pt[2], east = pt[3]
+      const hBot = layerIdx * gridH
+      const hTop = hBot + gridH
 
-      // 实体容积主体 (半透明科技感面填充)
-      const entity = viewer.entities.add({
-        rectangle: {
-          coordinates: rect,
-          height: currentBottomHeight,
-          extrudedHeight: currentTopHeight,
-          material: new gs3d.Cesium.ColorMaterialProperty(
-            gs3d.Cesium.Color.fromCssColorString('rgba(0, 255, 255, 0.25)')
-          )
+      // 中心点
+      const centerLon = (west + east) / 2
+      const centerLat = (south + north) / 2
+      const centerH = (hBot + hTop) / 2
+
+      // 经纬度 → 米（与 HTML 的 ll2xyz 逻辑一致）
+      const widthX = (east - west) * Math.PI / 180 * R * Math.cos(centerLat * Math.PI / 180)
+      const widthY = (north - south) * Math.PI / 180 * R
+      const widthZ = gridH
+
+      const center = Cesium.Cartesian3.fromDegrees(centerLon, centerLat, centerH)
+      const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(center)
+
+      flyToPositions.push(center)
+
+      // 半透明体块面
+      faceInstances.push(new Cesium.GeometryInstance({
+        geometry: Cesium.BoxGeometry.fromDimensions({
+          vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+          dimensions: new Cesium.Cartesian3(widthX, widthY, widthZ)
+        }),
+        modelMatrix,
+        attributes: {
+          color: Cesium.ColorGeometryInstanceAttribute.fromColor(faceColor)
         }
-      })
+      }))
 
-      // 底部发光边框
-      const outlineBottom = viewer.entities.add({
-        polyline: {
-          positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
-            west, south, currentBottomHeight,
-            east, south, currentBottomHeight,
-            east, north, currentBottomHeight,
-            west, north, currentBottomHeight,
-            west, south, currentBottomHeight
-          ]),
-          width: 5,
-          material: new gs3d.Cesium.PolylineGlowMaterialProperty({
-            glowPower: 0.3,
-            color: gs3d.Cesium.Color.CYAN
-          })
+      // 线框棱边
+      outlineInstances.push(new Cesium.GeometryInstance({
+        geometry: Cesium.BoxOutlineGeometry.fromDimensions({
+          dimensions: new Cesium.Cartesian3(widthX, widthY, widthZ)
+        }),
+        modelMatrix,
+        attributes: {
+          color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.CYAN)
         }
-      })
-
-      // 顶部发光边框
-      const outlineTop = viewer.entities.add({
-        polyline: {
-          positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
-            west, south, currentTopHeight,
-            east, south, currentTopHeight,
-            east, north, currentTopHeight,
-            west, north, currentTopHeight,
-            west, south, currentTopHeight
-          ]),
-          width: 5,
-          material: new gs3d.Cesium.PolylineGlowMaterialProperty({
-            glowPower: 0.3,
-            color: gs3d.Cesium.Color.CYAN
-          })
-        }
-      })
-
-      // 4条垂直高亮棱边
-      const drawVertical = (lon, lat) => {
-        return viewer.entities.add({
-          polyline: {
-            positions: gs3d.Cesium.Cartesian3.fromDegreesArrayHeights([
-              lon, lat, currentBottomHeight,
-              lon, lat, currentTopHeight
-            ]),
-            width: 5,
-            material: new gs3d.Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.3,
-              color: gs3d.Cesium.Color.CYAN
-            })
-          }
-        })
-      }
-
-      gridEntities.push(
-        entity, outlineBottom, outlineTop,
-        drawVertical(west, south),
-        drawVertical(east, south),
-        drawVertical(east, north),
-        drawVertical(west, north)
-      )
-    }
+      }))
+    })
   })
 
-  // 视角飞向新渲染的网格，调整以展现立体感
-  viewer.flyTo(gridEntities, {
-    offset: new gs3d.Cesium.HeadingPitchRange(
-      gs3d.Cesium.Math.toRadians(0),
-      gs3d.Cesium.Math.toRadians(-35),
-      150
-    ),
-    duration: 2.0
-  })
+  // 批量渲染：所有体块面合为 1 个 Primitive（高性能）
+  if (faceInstances.length) {
+    const p = viewer.scene.primitives.add(new Cesium.Primitive({
+      geometryInstances: faceInstances,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        translucent: true,
+        flat: true
+      }),
+      asynchronous: false
+    }))
+    gridPrimitives.push(p)
+  }
+
+  // 批量渲染：所有棱边合为 1 个 Primitive
+  if (outlineInstances.length) {
+    const p = viewer.scene.primitives.add(new Cesium.Primitive({
+      geometryInstances: outlineInstances,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        flat: true,
+        renderState: {
+          lineWidth: Math.min(2.0, viewer.scene.maximumAliasedLineWidth)
+        }
+      }),
+      asynchronous: false
+    }))
+    gridPrimitives.push(p)
+  }
+
+  // 飞向网格区域
+  if (flyToPositions.length) {
+    const boundingSphere = Cesium.BoundingSphere.fromPoints(flyToPositions)
+    viewer.camera.flyToBoundingSphere(boundingSphere, {
+      offset: new Cesium.HeadingPitchRange(
+        Cesium.Math.toRadians(0),
+        Cesium.Math.toRadians(-35),
+        150
+      ),
+      duration: 2.0
+    })
+  }
 }
 
 const clearGrid = () => {
-
-  gridEntities.forEach(entity => {
-    if (entity) viewer.entities.remove(entity)
+  gridPrimitives.forEach(p => {
+    if (p && !p.isDestroyed()) viewer.scene.primitives.remove(p)
   })
-  gridEntities.length = 0
+  gridPrimitives = []
 }
 
 const searchModelName = ref('')

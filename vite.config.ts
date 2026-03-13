@@ -35,9 +35,17 @@ export default defineConfig({
         rewrite: path => path.replace(/^\/people-locate/, '')
       },
       "/camera-locate": {
-        target: 'http://10.32.10.61:443/',
+        target: 'https://10.32.10.61:443/',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/camera-locate/, '')
+        secure: false,
+        rewrite: path => path.replace(/^\/camera-locate/, ''),
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // 移除可能会导致 Artemis 网关拦截的防盗链/跨域头
+            proxyReq.removeHeader('Origin');
+            proxyReq.removeHeader('Referer');
+          });
+        }
       },
       "/open-api/supos": {
         target: 'http://10.253.31.1:8080',
