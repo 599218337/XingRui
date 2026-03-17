@@ -9,20 +9,22 @@
 <template>
   <div class="productionTasks">
     <div class="header">
-      <span>生产任务</span>
+      <span>生产负荷统计</span>
     </div>
     <div class="content">
 
       <el-table :data="tableData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle">
         <el-table-column prop="sort" label="排名" width="70" align="center" filter-placement="bottom-end">
           <template #default="scope">
-            <span :style="{ color:scope.$index === 0 ? '#0085F5' : (scope.$index === 1 ?'#3ED1EF':(scope.$index === 2 ?'#E9C27A':'#ffffff'))}">{{ scope.row.sort }}</span>
+            <span
+              :style="{ color: scope.$index === 0 ? '#0085F5' : (scope.$index === 1 ? '#3ED1EF' : (scope.$index === 2 ? '#E9C27A' : '#ffffff')) }">{{
+                scope.row.sort }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="车间名称"  />
-        <el-table-column prop="task" label="任务数" width="70" align="center"/>
-        <el-table-column prop="complete" label="完成数" width="70" align="center"/>
-        <el-table-column prop="abandon" label="废弃数" width="70" align="center"/>
+        <el-table-column prop="name" label="车间名称" />
+        <el-table-column prop="task" label="任务数" width="70" align="center" />
+        <el-table-column prop="complete" label="完成数" width="70" align="center" />
+        <el-table-column prop="abandon" label="废弃数" width="70" align="center" />
       </el-table>
 
 

@@ -9,7 +9,7 @@
 <template>
   <div class="energyStatistics">
     <div class="header">
-      <span>能耗统计</span>
+      <span>原辅料消耗</span>
     </div>
     <div class="content">
       <div id="barchart" style="width: 380px;height: 200px; margin: 0;">
@@ -22,11 +22,11 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted,nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts';
 
 onMounted(() => {
-  nextTick(()=>{
+  nextTick(() => {
     initChart()
 
   })

@@ -9,7 +9,7 @@
 <template>
   <div class="environmentalData">
     <div class="header">
-      <span>环境数据</span>
+      <span>原料和产品库存</span>
     </div>
     <div class="content">
       <div class="left">

@@ -102,7 +102,7 @@
     :style="{ left: gridTooltip.x + 'px', top: gridTooltip.y + 'px' }">
     <div class="grid-tooltip__title">网格信息</div>
     <div class="grid-tooltip__row"><span class="grid-tooltip__key">网格编码</span><span class="grid-tooltip__val">{{
-      gridTooltip.code }}</span></div>
+      formatGridCode(gridTooltip.code) }}</span></div>
     <div class="grid-tooltip__row"><span class="grid-tooltip__key">底部高度</span><span class="grid-tooltip__val">{{
       gridTooltip.height }}</span></div>
     <div class="grid-tooltip__row"><span class="grid-tooltip__key">纬度范围</span><span class="grid-tooltip__val">{{
@@ -144,6 +144,7 @@ const store = useStore();
 import emitter from '@/utils/bus'
 import { deviceList } from './deviceList'
 import * as gs3d from '/public/gs3d/index'
+import { geosotToBeiDou2D } from './geosot2bdcode'
 
 const { viewer } = defineProps(['viewer'])
 // 按 categoryName 分组
@@ -401,6 +402,16 @@ const gridTooltip = ref({
   visible: false, x: 0, y: 0,
   code: '-', idx: 0, height: '-', latRange: '-', lngRange: '-',
 })
+
+const formatGridCode = (code) => {
+  if (!code || code === '-') return '-'
+  try {
+    return geosotToBeiDou2D(code)
+  } catch (error) {
+    console.warn('[DevicesListPoi] Grid code conversion failed:', error)
+    return code
+  }
+}
 let gridHoverHandler = null
 let lastHighlightId = null // 上一个高亮的实例 id
 

@@ -15,7 +15,7 @@ import {
   viewChange,
 } from '@/components';
 import * as gs3d from '/public/gs3d/index';
-import { onMounted, onUnmounted, ref, reactive, watch } from 'vue'
+import { onMounted, onUnmounted, ref, reactive, watch, shallowRef } from 'vue'
 import { useStore } from "vuex";
 
 import utils from '@/utils/utils'
@@ -70,7 +70,7 @@ const toggleShaderEffect = (effectType: 'fresnel' | 'xray') => {
 let timer = null
 const store = useStore();
 const { Cesium } = gs3d
-let viewer: any = ref(null)
+let viewer: any = shallowRef(null)
 const homeref = ref(null)
 const Specifications = reactive({
   //定义的宽高比例，初始为1
@@ -312,7 +312,7 @@ const addAllModel = async () => {
     id: 'noWallBuild',
     label: 'noWallBuild',
     type: 'model_3d_tiles',
-    url: 'model5/tileset.json',
+    url: 'model7/tileset.json',
   },
   )
 
@@ -402,7 +402,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref">
 
-    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
+    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -446,7 +446,7 @@ const pickPoint = () => {
     <!-- 消防位置 -->
     <Transition name="slide-fade3">
       <div class="left_wrapper_camera" v-if="store.state.showFire">
-        <fireStatistics></fireStatistics>
+        <fireStatistics :viewer="viewer"></fireStatistics>
       </div>
     </Transition>
     <!-- 人员巡视 -->

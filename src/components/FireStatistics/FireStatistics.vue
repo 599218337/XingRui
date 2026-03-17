@@ -44,30 +44,75 @@
       <span>设备数据</span>
       <button class="device-detail-popup__close" @click="dialogVisible = false"></button>
     </div>
-    <div class="device-detail-popup__body">
-      <div class="device-detail-popup__row">
-        <span class="device-detail-popup__label">设备名称</span>
-        <span class="device-detail-popup__value">{{ currentDevice?.name || '--' }}</span>
+    <div class="device-detail-popup__body" v-loading="loading" element-loading-background="rgba(8, 15, 24, 0.4)">
+      <div class="device-detail-popup__tabs">
+        <div class="device-detail-popup__tab-item" :class="{ 'is-active': activeTab === 'realtime' }"
+          @click="activeTab = 'realtime'">当前实时值</div>
+        <div class="device-detail-popup__tab-item" :class="{ 'is-active': activeTab === 'history' }"
+          @click="activeTab = 'history'">历史记录</div>
       </div>
-      <div class="device-detail-popup__row">
-        <span class="device-detail-popup__label">当前数值</span>
-        <span class="device-detail-popup__value">{{ currentValue !== null && currentValue !== undefined ? currentValue : '--' }}</span>
+
+      <div v-if="activeTab === 'realtime'" class="device-detail-popup__content">
+        <div class="device-detail-popup__row">
+          <span class="device-detail-popup__label">设备名称</span>
+          <span class="device-detail-popup__value">{{ currentDevice?.name || '--' }}</span>
+        </div>
+        <div class="device-detail-popup__row">
+          <span class="device-detail-popup__label">当前数值</span>
+          <span class="device-detail-popup__value">{{ (currentValue !== null && currentValue !== undefined &&
+            currentValue
+            !== '') ?
+            Number(currentValue).toFixed(5) : '--' }}</span>
+        </div>
+        <div class="device-detail-popup__row">
+          <span class="device-detail-popup__label">当前状态</span>
+          <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text }}</span>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'history'" class="device-detail-popup__content">
+        <!-- 历史记录占位 -->
+        <div class="device-detail-popup__empty">暂无历史记录</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed, markRaw } from 'vue'
 import { useStore } from "vuex";
 const store = useStore();
 import { ElMessage } from 'element-plus';
 import { devicePVList } from './devicesPVList';
+import { effectList } from './effectList';
 import { fetchDeviceData } from './start';
-
+import * as gs3d from '/public/gs3d/index';
+const { viewer } = defineProps(['viewer'])
 const dialogVisible = ref(false)
+const loading = ref(false)
 const currentDevice = ref({})
 const currentValue = ref('')
+const activeTab = ref('realtime')
+
+const deviceStatus = computed(() => {
+  if (!currentDevice.value || currentValue.value === '' || currentValue.value === null || currentValue.value === undefined) {
+    return { text: '--', color: '#fff' }
+  }
+
+  const config = effectList.find(item => item.id === currentDevice.value.id)
+  if (!config) {
+    return { text: '正常', color: '#00FF7A' }
+  }
+
+  const val = Number(currentValue.value)
+  if (val > config.maxValue) {
+    return { text: '过高警报', color: '#FF4D4F' }
+  } else if (val < config.minValue) {
+    return { text: '过低警报', color: '#FFA940' }
+  } else {
+    return { text: '正常', color: '#00FF7A' }
+  }
+})
 
 onMounted(() => {
 })
@@ -82,25 +127,169 @@ const showContentFuc = () => {
 }
 
 const queryDeviceData = async (val) => {
-  if (!val.id) {
-    ElMessage({
-      type: 'warning',
-      message: `${val.name}数据缺失！`
-    })
-    return
-  }
-
+  currentDevice.value = val
+  dialogVisible.value = true
+  loading.value = true
   try {
     const value = await fetchDeviceData(val.id)
-    currentDevice.value = val
     currentValue.value = value
-    dialogVisible.value = true
-  } catch (err) {
-    ElMessage({
-      type: 'error',
-      message: err.message || '获取数据失败'
-    })
+    showWaterEffect(val.id, value)
+  } catch (error) {
+    console.error('Failed to fetch device data:', error)
+    ElMessage.error('获取设备数据失败')
+  } finally {
+    loading.value = false
   }
+}
+const currentPrimitives = ref([]);
+const showWaterEffect = (id, value) => {
+  currentPrimitives.value.forEach(prim => {
+    viewer.scene.primitives.remove(prim);
+  });
+  currentPrimitives.value = []; // 清空数组
+  const config = effectList.find(item => item.id === id)
+  if (!config) return
+
+  // 如果没有 type，表示不需要渲染效果，直接执行 flyto
+  if (!config.type) {
+    if (config.point) {
+      const centerPosition = gs3d.Cesium.Cartesian3.fromDegrees(config.point[0], config.point[1]);
+      const flyToTarget = new gs3d.Cesium.BoundingSphere(centerPosition, 0);
+      viewer.camera.flyToBoundingSphere(flyToTarget, {
+        offset: new gs3d.Cesium.HeadingPitchRange(
+          gs3d.Cesium.Math.toRadians(config.flyto[0]),
+          gs3d.Cesium.Math.toRadians(config.flyto[1]),
+          config.flyto[2]
+        ),
+        duration: 1.5
+      });
+    }
+    return;
+  }
+
+  const topWaterLevel = config.modelBottom + (Number(value) / config.maxValue) * config.modelHeight;    // 水面高度
+  const poolBottomLevel = config.modelBottom;  // 底部高度
+
+  let geometryInstance, surfaceGeometryInstance, flyToTarget;
+
+  if (config.type.includes('circle')) {
+    const centerPosition = gs3d.Cesium.Cartesian3.fromDegrees(config.point[0], config.point[1]);
+    const radius = config.radius;
+
+    geometryInstance = new gs3d.Cesium.GeometryInstance({
+      geometry: new gs3d.Cesium.EllipseGeometry({
+        center: centerPosition,
+        semiMajorAxis: radius,
+        semiMinorAxis: radius,
+        height: poolBottomLevel,
+        extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
+      }),
+      attributes: {
+        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4) // 调节 0.4 改变水的清澈度
+        )
+      }
+    });
+
+    // surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
+    //   geometry: new gs3d.Cesium.EllipseGeometry({
+    //     center: centerPosition,
+    //     semiMajorAxis: radius,
+    //     semiMinorAxis: radius,
+    //     height: topWaterLevel
+    //   })
+    // });
+    surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
+      geometry: new gs3d.Cesium.EllipseGeometry({
+        center: centerPosition,
+        semiMajorAxis: radius,
+        semiMinorAxis: radius,
+        height: topWaterLevel
+      }),
+      // 【必须加上这一句】
+      attributes: {
+        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6)
+        )
+      }
+    });
+
+    flyToTarget = new gs3d.Cesium.BoundingSphere(centerPosition, radius);
+  } else {
+    const waterPositions = gs3d.Cesium.Cartesian3.fromDegreesArray(config.coordinates);
+
+    geometryInstance = new gs3d.Cesium.GeometryInstance({
+      geometry: new gs3d.Cesium.PolygonGeometry({
+        polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
+        height: poolBottomLevel,
+        extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
+      }),
+      attributes: {
+        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
+        )
+      }
+    });
+
+    surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
+      geometry: new gs3d.Cesium.PolygonGeometry({
+        polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
+        height: topWaterLevel,
+        vertexFormat: gs3d.Cesium.VertexFormat.POSITION_NORMAL_AND_ST
+      })
+    });
+
+    flyToTarget = gs3d.Cesium.BoundingSphere.fromPoints(waterPositions);
+  }
+
+  // ==========================================
+  // 第一层：水体 (提供体积感和深度)
+  // ==========================================
+  const waterVolumePrimitive = new gs3d.Cesium.Primitive({
+    geometryInstances: geometryInstance,
+    // appearance: new gs3d.Cesium.MaterialAppearance({
+    //   material: gs3d.Cesium.Material.fromType('Color', {
+    //     color: new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
+    //   }),
+    //   translucent: true,
+    //   closed: true
+    // })
+    appearance: new gs3d.Cesium.PerInstanceColorAppearance({
+      translucent: true,
+      closed: true
+    })
+  });
+
+  // ==========================================
+  // 第二层：水面 (提供生动的波纹和反光)
+  // ==========================================
+  const waterSurfacePrimitive = new gs3d.Cesium.Primitive({
+    geometryInstances: surfaceGeometryInstance,
+    appearance: new gs3d.Cesium.EllipsoidSurfaceAppearance({
+      aboveGround: true,
+      material: gs3d.Cesium.Material.fromType('Water', {
+        baseWaterColor: new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6),
+        normalMap: '/image/waterNormals.jpg',
+        frequency: 100.0,
+        animationSpeed: 0.02,
+        amplitude: 5.0
+      })
+    })
+  });
+
+  viewer.scene.primitives.add(waterVolumePrimitive);
+  viewer.scene.primitives.add(waterSurfacePrimitive);
+  currentPrimitives.value.push(markRaw(waterVolumePrimitive), markRaw(waterSurfacePrimitive));
+
+  // 飞向目标区域
+  viewer.camera.flyToBoundingSphere(flyToTarget, {
+    offset: new gs3d.Cesium.HeadingPitchRange(
+      gs3d.Cesium.Math.toRadians(config.flyto[0]),
+      gs3d.Cesium.Math.toRadians(config.flyto[1]),
+      config.flyto[2]
+    ),
+    duration: 1.5
+  });
 }
 </script>
 

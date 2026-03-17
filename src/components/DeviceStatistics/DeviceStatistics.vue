@@ -13,25 +13,32 @@
     </div>
     <div class="content">
 
-      <el-table :data="Array.from(store.state.devicesMap.values())" height="231" style="width: 100%" ref="alarmTable"
-        size='small' :row-style="rowstyle">
-        <el-table-column prop="Num" label="设备编号" width="70" align="center" />
-        <el-table-column prop="Name" label="设备名称" width="70" align="center" />
-        <el-table-column prop="WorkName" label="设备所在地" align="center" />
+      <!-- 设备统计信息块 -->
+      <div class="statistics-summary">
+        <div class="stat-item">
+          <div class="stat-label">设备总数</div>
+          <div class="stat-value total">{{ totalDeviceCount }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">在线数</div>
+          <div class="stat-value online">{{ onlineCount }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">离线数</div>
+          <div class="stat-value offline">{{ offlineCount }}</div>
+        </div>
+      </div>
+
+      <el-table :data="tableData" height="165" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle">
+        <el-table-column prop="设备位号" label="设备编号" width="130" show-overflow-tooltip align="center" />
+        <el-table-column prop="设备名称" label="设备名称" show-overflow-tooltip align="center" />
+        <el-table-column prop="工序" label="所属工序" show-overflow-tooltip align="center" />
         <el-table-column label="设备状态" width="70" align="center" filter-placement="bottom-end">
           <template #default="{ row }">
-            <span :style="{ color: row.state === '1' ? 'lime' : 'orange' }"> · {{ Number(row.state) ===
-              2
-              ? '离线' : '在线' }}</span>
+            <span :style="{ color: row.state === 1 ? 'lime' : 'orange' }"> · {{ row.state === 1 ? '在线' : '离线' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="detail" label="详情" width="70" align="center">
-          <template #default="scope">
-            <img src="/image/detail.png"
-              style="width: 12px;height: 12px;cursor: pointer;display: flex;justify-content: center;align-items: center;margin: 0 auto;"
-              @click="viewDetail(scope.$index, scope.row)">
-          </template>
-        </el-table-column>
+
       </el-table>
 
 
@@ -44,9 +51,68 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from 'vue'
 import { useStore } from "vuex";
+import { deviceList } from './deviceList.js';
+import { fetchDeviceData } from '../FireStatistics/start.js';
+
 const store = useStore();
 const alarmTable = ref()
+
+const totalDeviceCount = ref(deviceList.length);
+const onlineCount = ref(0);
+const offlineCount = ref(0);
+
+const tableData = ref(deviceList.map(item => ({
+  ...item,
+  state: 2 // 默认离线
+})));
+
 onMounted(() => {
+  const getDeviceStatus = async () => {
+    const ids = deviceList.map(item => item.设备位号);
+    const concurrency = 10;
+    const noValueDevices = [];
+
+    // 分批并发执行单个查询，避免同时发起200+请求导致浏览器卡顿或被阻断
+    for (let i = 0; i < ids.length; i += concurrency) {
+      const chunk = ids.slice(i, i + concurrency);
+
+      await Promise.allSettled(chunk.map(async (id) => {
+        const currentItem = deviceList.find(item => item.设备位号 === id);
+        try {
+          const status = await fetchDeviceData(id);
+          
+          if (status === undefined || status === null) {
+            noValueDevices.push(currentItem);
+          }
+          
+          const isOnline = status === true || String(status).toLowerCase() === 'true';
+
+          const targetRow = tableData.value.find(item => item.设备位号 === id);
+          if (targetRow) {
+            targetRow.state = isOnline ? 1 : 2;
+          }
+
+          if (isOnline) {
+            onlineCount.value++;
+          } else {
+            offlineCount.value++;
+          }
+        } catch (error) {
+          noValueDevices.push(currentItem);
+          // 只记录离线，不打印过多的错误日志
+          offlineCount.value++;
+        }
+      }));
+    }
+    
+    if (noValueDevices.length > 0) {
+      console.log(`有 ${noValueDevices.length} 个设备接口未返回value或调用失败:`);
+      console.table(noValueDevices);
+    }
+  };
+
+  getDeviceStatus();
+
 
   nextTick(() => {
     const demo = alarmTable.value.$refs.bodyWrapper.getElementsByClassName('el-scrollbar__wrap')[0]
@@ -85,6 +151,45 @@ const viewDetail = (index, row) => {
 
 <style lang="scss" scoped>
 @import url('./DeviceStatistics.scss');
+
+.statistics-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  margin-bottom: 5px;
+  background: rgba(136, 181, 255, 0.1);
+  border-radius: 4px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #c9d8ff;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.stat-value.total {
+  color: #fff;
+}
+
+.stat-value.online {
+  color: lime;
+}
+
+.stat-value.offline {
+  color: orange;
+}
 
 :deep(.el-table tr) {
   background-color: #162556;

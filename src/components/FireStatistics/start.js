@@ -87,4 +87,4 @@ export async function fetchDeviceData(id) {
     } else {
         throw new Error(data.message || '获取数据失败或格式不正确')
     }
-}
+}

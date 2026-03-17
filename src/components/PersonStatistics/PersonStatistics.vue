@@ -54,7 +54,7 @@
         <div class="info-row"><span class="label">部门：</span><span class="value">{{ currentPerson?.department }}</span>
         </div>
         <div class="info-row"><span class="label">工种：</span><span class="value">{{ currentPerson?.worktypename || '无'
-            }}</span></div>
+        }}</span></div>
         <div class="info-row"><span class="label">电话：</span><span class="value">{{ currentPerson?.tel || '无' }}</span>
         </div>
       </div>
@@ -250,6 +250,7 @@ onMounted(async () => {
   peopleList.value = await getPersonList(peopleApiToken)
   activeName.value = [...peopleList.value.keys()][0]
   Array.from(peopleList.value.values()).forEach(element => {
+    element[0].department = element[0].department ? element[0].department : '一线员工'
     departTypeList.value.push({ label: element[0].department, value: element[0].department, detailPeople: element })
   });
 
