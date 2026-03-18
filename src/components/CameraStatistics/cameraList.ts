@@ -1040,7 +1040,7 @@ export const cameraList = {
     {
       cameraIndexCode: '7b79c4d866b046efa45fffc99c796ff0',
       sub_cameraIndexCode: '37567df1ea59417ba334d63140364532',
-      label: "废弃吸收塔视镜",
+      label: "废气吸收塔视镜",
       sub_label: '盐酸合成三楼盐酸视镜A',
       coord: [111.40923325537533, 30.55392475453098],
       type: 'fbqj',

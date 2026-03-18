@@ -12,27 +12,43 @@
       <span>原料和产品库存</span>
     </div>
     <div class="content">
-      <div class="left">
-        <div class="ltextItem" v-for="(item, index) in leftData">
-          <div class="text1">{{ item.label1 }}</div>
-          <div class="text2">{{ item.label2 }}</div>
+      <div class="column-container">
+        <div class="side-column scrollable-column">
+          <div class="cyber-item" v-for="(item, index) in leftData" :key="'l-' + index">
+            <div class="item-header">
+              <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
+              <div class="item-percent">{{ item.label3 }}</div>
+            </div>
+            <div class="item-body">
+              <div class="item-values-row">
+                <div class="item-value">{{ item.label2 }}mm</div>
+              </div>
+              <div class="item-progress">
+                <div class="progress-fill" :style="{ width: item.label3 }"></div>
+              </div>
+            </div>
+            <div class="item-decor"></div>
+          </div>
+        </div>
 
+        <div class="side-column scrollable-column">
+          <div class="cyber-item" v-for="(item, index) in rightData" :key="'r-' + index">
+            <div class="item-header">
+              <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
+              <div class="item-percent">{{ item.label3 }}</div>
+            </div>
+            <div class="item-body">
+              <div class="item-values-row">
+                <div class="item-value">{{ item.label2 }}</div>
+              </div>
+              <div class="item-progress">
+                <div class="progress-fill" :style="{ width: item.label3 }"></div>
+              </div>
+            </div>
+            <div class="item-decor"></div>
+          </div>
         </div>
       </div>
-      <div class="middle">
-        <div class="text">
-          {{ middleData }}
-        </div>
-      </div>
-      <div class="right">
-        <div class="rtextItem" v-for="(item, index) in rightData">
-          <div class="text1">{{ item.label1 }}</div>
-          <div class="text2">{{ item.label2 }}</div>
-
-        </div>
-      </div>
-
-
     </div>
     <div class="line"></div>
 
@@ -43,44 +59,45 @@
 import { reactive } from 'vue';
 import { ref, watch, onMounted } from 'vue'
 
-const middleData = ref('兴瑞二期氯碱装置')
 const leftData = reactive([
-  {
-    id: 0,
-    label1: '温度',
-    label2: '25°C'
-  },
-  {
-    id: 1,
-    label1: '风速',
-    label2: '10m/s'
-  },
-  {
-    id: 2,
-    label1: '污染指数',
-    label2: 'PM2.5'
-  }
+
 ])
 const rightData = reactive([
-  {
-    id: 0,
-    label1: '湿度',
-    label2: '46%'
-  },
-  {
-    id: 1,
-    label1: '气压',
-    label2: '110kPa'
-  },
-  {
-    id: 2,
-    label1: '空气质量',
-    label2: '542'
-  }
+
 ])
 
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+
+    const response = await fetch('/nodeApi/getMaterialsNum')
+    if (!response.ok) throw new Error('Network response was not ok')
+    const result = await response.json()
+
+    // Assuming result.data is an array of { materialName, num }
+    // Or adjust based on the actual response structure
+    const data = result.data || result
+
+    const formattedData = data.map((item, index) => {
+      const maxLevel = parseFloat(item['液位上限']) || 1; // Prevent division by zero
+      const currentLevel = parseFloat(item['液位']) || 0;
+      const percentage = Math.min(100, Math.max(0, Math.round((currentLevel / maxLevel) * 100)));
+
+      return {
+        id: index,
+        label1: item['物料名称'] + '-' + item['罐区编码'],
+        label2: item['液位'],
+        label3: percentage + '%',
+      };
+    })
+
+    // Split data into two halves
+    const half = Math.ceil(formattedData.length / 2)
+    leftData.splice(0, leftData.length, ...formattedData.slice(0, half))
+    rightData.splice(0, rightData.length, ...formattedData.slice(half))
+  } catch (error) {
+    console.error('Failed to fetch materials data:', error)
+  }
 })
 
 </script>

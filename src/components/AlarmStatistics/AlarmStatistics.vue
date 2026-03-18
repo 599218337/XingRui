@@ -9,19 +9,17 @@
 <template>
   <div class="alarmStatistics">
     <div class="header">
-      <span>告警统计</span>
+      <span>实时告警</span>
     </div>
     <div class="content">
 
       <el-table :data="tableData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle">
-        <el-table-column prop="address" label="地点" width="100" />
-        <el-table-column prop="time" label="时间" width="50" />
         <el-table-column prop="device" label="告警设备" />
+        <el-table-column prop="time" label="时间" width="50" />
+        <el-table-column prop="currentValue" label="实时值" width="70" />
         <el-table-column prop="state" label="状态" width="100" filter-placement="bottom-end">
           <template #default="scope">
-            <el-tag effect="dark"
-              :type="scope.row.state === '正常' ? 'primary' : (scope.row.state === '注意' ? 'warning' : (scope.row.state === '紧急' ? 'danger' : 'info'))"
-              disable-transitions>{{ scope.row.state }}</el-tag>
+            <span :style="{ color: scope.row.color }">{{ scope.row.state }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -34,27 +32,25 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
-// import { Vue3SeamlessScroll } from "vue3-seamless-scroll";
-const tableData = [
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '监控探头', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '灭火器', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '监控探头', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '灭火器', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '监控探头', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '灭火器', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '监控探头', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '灭火器', state: '正常' },
-  { address: '工厂一车间', time: '21:40', device: '消防栓', state: '正常' }
-]
+import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { useStore } from "vuex";
+
+const store = useStore();
+
+const tableData = computed(() => {
+  return store.state.alarmList.map(item => ({
+    address: item.address || '系统设备',
+    time: item.time,
+    device: item.name,
+    state: item.alarmText,
+    currentValue: Number(item.currentValue).toFixed(2),
+    color: item.color
+  }))
+})
 
 const alarmTable = ref()
 onMounted(() => {
+  store.dispatch('startPollingAlarms');
 
   nextTick(() => {
     const demo = alarmTable.value.$refs.bodyWrapper.getElementsByClassName('el-scrollbar__wrap')[0]

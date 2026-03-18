@@ -5,18 +5,21 @@
   top: 628px;
   width: 100%;
   height: 284px;
+
   .header {
     width: 100%;
     height: 40px;
     background: url("/image/titlebg.png");
     background-size: 100% 100%;
-    > span {
+
+    >span {
       margin-left: 10px;
       height: 40px;
       line-height: 40px;
       background: linear-gradient(0deg, #7dc2fe 0%, #e4f2ff 100%);
-      -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
-      -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       font-size: 18px;
       font-family: Alimama ShuHeiTi, Alimama ShuHeiTi-Bold;
       font-weight: 700;
@@ -24,85 +27,156 @@
       letter-spacing: 0.36px;
     }
   }
+
   .content {
     width: 100%;
     height: 244px;
     background: rgba(8, 15, 24, 0.4);
-    display: inline-flex;
-    padding: 35px 20px;
+    display: flex;
+    padding: 20px;
     justify-content: center;
     align-items: center;
 
-    .middle {
-      width: 70%;
-      height: 100%;
-      background: url("/image/huanjing.png") no-repeat;
-      // background-size: 100% 100%;
-      background-size: contain;
-      // background-repeat: no-repeat;
-      background-position: center;
+    .column-container {
       display: flex;
-      justify-content: center;
+      width: 100%;
+      height: 100%;
+      justify-content: space-between;
       align-items: center;
-      .text {
-        width: 54px;
-        height: 28px;
-        font-size: 11px;
-        // font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
-        font-weight: normal;
-        color: #ffffff;
-        letter-spacing: 1.13px;
+      gap: 10px;
+    }
+
+    .scrollable-column {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+      padding: 0 5px;
+
+      &::-webkit-scrollbar {
+        width: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(0, 240, 255, 0.4);
+        border-radius: 2px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
       }
     }
-    .left {
-      width: 20%;
-      height: 100%;
-      .ltextItem {
-        text-align: right;
-        padding: 0px 10px 23px 0px;
-        .text1 {
-          font-size: 12px;
-          // font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
-          font-weight: normal;
-          color: #ffffff;
-        }
-        .text2 {
-          background: linear-gradient(0deg, #72abe0 0%, #ffffff 100%);
-          -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
-          -webkit-text-fill-color: transparent; /*给文字设置成透明*/
-          font-size: 16px;
-          font-family: Arial;
-          font-weight: 700;
-          color: #ffffff;
-          letter-spacing: 1.31px;
+
+    .side-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cyber-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: stretch;
+      padding: 10px 15px;
+      background: rgba(0, 30, 60, 0.4);
+      border: 1px solid rgba(0, 240, 255, 0.1);
+      border-left: 3px solid #00f0ff;
+      transition: all 0.3s ease;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+
+      &:hover {
+        background: rgba(0, 240, 255, 0.1);
+        border-color: rgba(0, 240, 255, 0.4);
+        box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+
+        .item-decor {
+          opacity: 1;
         }
       }
-    }
-    .right {
-      width: 20%;
-      height: 100%;
-      .rtextItem {
-        text-align: left;
-        padding: 0px 0px 23px 10px;
-        .text1 {
-          font-size: 12px;
-          // font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;
-          font-weight: normal;
-          color: #ffffff;
+
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+
+        .item-label {
+          font-size: 13px;
+          color: rgba(200, 255, 255, 0.8);
+          letter-spacing: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 70%;
         }
-        .text2 {
-          background: linear-gradient(0deg, #72abe0 0%, #ffffff 100%);
-          -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
-          -webkit-text-fill-color: transparent; /*给文字设置成透明*/
-          font-size: 16px;
-          font-family: Arial;
-          font-weight: 700;
-          color: #ffffff;
-          letter-spacing: 1.31px;
+
+        .item-percent {
+          font-size: 13px;
+          color: #00f0ff;
+          font-family: 'Arial', sans-serif;
+          font-weight: bold;
+          text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
         }
+      }
+
+      .item-body {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+
+        .item-values-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 8px;
+
+          .item-value {
+            font-family: 'Arial', sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0, 240, 255, 0.8);
+            background: linear-gradient(90deg, #fff, #7dc2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+
+
+        }
+
+        .item-progress {
+          width: 100%;
+          height: 3px;
+          background: rgba(0, 240, 255, 0.1);
+          border-radius: 2px;
+          overflow: hidden;
+          position: relative;
+
+          .progress-fill {
+            height: 100%;
+            background: #00f0ff;
+            box-shadow: 0 0 8px #00f0ff;
+            border-radius: 2px;
+            transition: width 0.5s ease-in-out;
+          }
+        }
+      }
+
+      .item-decor {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 15px;
+        height: 1px;
+        background: #00f0ff;
+        opacity: 0.5;
+        transition: opacity 0.3s;
       }
     }
   }
+
   .line {
     width: 100%;
     height: 1px;

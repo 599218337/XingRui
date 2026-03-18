@@ -24,5 +24,7 @@ export default {
   fireArray: [],
   personArray: [],
   devicesMap: new Map(),
-  weather: ''
+  weather: '',
+  alarmList: [],
+  isPollingAlarms: false
 }

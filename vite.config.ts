@@ -52,9 +52,13 @@ export default defineConfig({
         changeOrigin: true
       },
       "/zwyl": {
-        target: 'http://172.16.8.25:8892/',
+        target: 'http://192.168.130.106:8888/',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/zwyl/, '')
+      },
+      "/nodeApi": {
+        target: 'http://192.168.130.106:3000/',
+        changeOrigin: true
       }
 
     }

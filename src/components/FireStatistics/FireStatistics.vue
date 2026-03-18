@@ -11,22 +11,30 @@
     :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
     <div class="widget">
       <div class="header">
-        <span>设备列表</span>
+        <span>实时告警</span>
       </div>
       <div class="content">
-        <template v-for="item in devicePVList" :key="item.id">
-          <div class="contentItem">
-            <div class="Item" :title="item.name">
-              <div class="point" style="background: #00FF7A"></div>
-              <div class="text">{{ item.name }}</div>
+        <template v-if="alarmList.length > 0">
+          <template v-for="item in alarmList" :key="item.id">
+            <div class="contentItem">
+              <div class="Item" :title="item.name">
+                <div class="point" :style="{ background: item.color }"></div>
+                <div class="text"><span :style="{ color: item.color, marginLeft: '4px', fontSize: '12px' }">[{{
+                  item.alarmText }} {{ Number(item.currentValue).toFixed(2) }}] </span> {{ item.name }}
+                </div>
+              </div>
+              <div class="icon">
+                <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
+                  <div class="view" @click.stop="queryDeviceData(item)"></div>
+                </el-tooltip>
+              </div>
             </div>
-            <div class="icon">
-              <el-tooltip content="查看" placement="top" popper-class="iconTooltip" :offset="3">
-                <div class="view" @click.stop="queryDeviceData(item)"></div>
-              </el-tooltip>
-            </div>
-          </div>
+          </template>
         </template>
+        <div v-else
+          style="text-align: center; color: #a2b0c1; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: 1px;">
+          暂无警报
+        </div>
 
       </div>
       <div class="line"></div>
@@ -45,41 +53,73 @@
       <button class="device-detail-popup__close" @click="dialogVisible = false"></button>
     </div>
     <div class="device-detail-popup__body" v-loading="loading" element-loading-background="rgba(8, 15, 24, 0.4)">
-      <div class="device-detail-popup__tabs">
-        <div class="device-detail-popup__tab-item" :class="{ 'is-active': activeTab === 'realtime' }"
-          @click="activeTab = 'realtime'">当前实时值</div>
-        <div class="device-detail-popup__tab-item" :class="{ 'is-active': activeTab === 'history' }"
-          @click="activeTab = 'history'">历史记录</div>
+
+      <!-- 左侧：实时值 -->
+      <div class="device-detail-popup__left">
+        <div class="device-detail-popup__subtitle">
+          <span>当前实时值</span>
+        </div>
+        <div class="device-detail-popup__content" style="flex: none;">
+          <div class="device-detail-popup__row">
+            <span class="device-detail-popup__label">设备名称</span>
+            <span class="device-detail-popup__value">{{ currentDevice?.name || '--' }}</span>
+          </div>
+          <div class="device-detail-popup__row">
+            <span class="device-detail-popup__label">当前数值</span>
+            <span class="device-detail-popup__value">{{ (currentValue !== null && currentValue !== undefined &&
+              currentValue !== '') ?
+              Number(currentValue).toFixed(4) : '--' }}</span>
+          </div>
+          <div class="device-detail-popup__row">
+            <span class="device-detail-popup__label">当前状态</span>
+            <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text
+            }}</span>
+          </div>
+        </div>
       </div>
 
-      <div v-if="activeTab === 'realtime'" class="device-detail-popup__content">
-        <div class="device-detail-popup__row">
-          <span class="device-detail-popup__label">设备名称</span>
-          <span class="device-detail-popup__value">{{ currentDevice?.name || '--' }}</span>
+      <!-- 右侧：历史告警 -->
+      <div class="device-detail-popup__right widget">
+        <div class="header">
+          <span>历史告警</span>
         </div>
-        <div class="device-detail-popup__row">
-          <span class="device-detail-popup__label">当前数值</span>
-          <span class="device-detail-popup__value">{{ (currentValue !== null && currentValue !== undefined &&
-            currentValue
-            !== '') ?
-            Number(currentValue).toFixed(5) : '--' }}</span>
-        </div>
-        <div class="device-detail-popup__row">
-          <span class="device-detail-popup__label">当前状态</span>
-          <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text }}</span>
+        <div class="content" style="padding: 0;">
+          <el-table class="custom-table" :data="[]" style="width: 100%; height: 100%;" empty-text="暂无历史报警">
+            <el-table-column prop="time" label="报警时间" width="160"></el-table-column>
+            <el-table-column prop="value" label="报警数值" width="100"></el-table-column>
+            <el-table-column prop="type" label="报警类型"></el-table-column>
+          </el-table>
         </div>
       </div>
 
-      <div v-if="activeTab === 'history'" class="device-detail-popup__content">
-        <!-- 历史记录占位 -->
-        <div class="device-detail-popup__empty">暂无历史记录</div>
+    </div>
+  </div>
+
+  <!-- 右侧全部历史告警面板 -->
+  <div class="fireStatisticsRight"
+    :style="{ transform: `translateX(${showRightContent ? -374 : 0}px)`, transition: 'transform 1s' }">
+    <div id="fireBtnRight" @click="showRightContentFuc"
+      :style="{ background: showRightContent ? 'url(/image/zhankai.png)' : 'url(/image/shouqi.png)', backgroundSize: '100% 100%' }">
+    </div>
+    <div class="widget">
+      <div class="header">
+        <span>历史告警</span>
       </div>
+      <div class="content" style="padding: 0;">
+        <el-table class="custom-table" :data="[]" style="width: 100%; height: 100%;" empty-text="暂无历史报警">
+          <el-table-column prop="time" label="报警时间" width="95" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="name" label="设备名称" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="value" label="报警数值" width="80"></el-table-column>
+          <el-table-column prop="type" label="类型" width="55" show-overflow-tooltip></el-table-column>
+        </el-table>
+      </div>
+      <div class="line"></div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed, markRaw } from 'vue'
+import { ref, watch, reactive, onMounted, onUnmounted, computed, markRaw } from 'vue'
 import { useStore } from "vuex";
 const store = useStore();
 import { ElMessage } from 'element-plus';
@@ -92,14 +132,13 @@ const dialogVisible = ref(false)
 const loading = ref(false)
 const currentDevice = ref({})
 const currentValue = ref('')
-const activeTab = ref('realtime')
 
 const deviceStatus = computed(() => {
   if (!currentDevice.value || currentValue.value === '' || currentValue.value === null || currentValue.value === undefined) {
     return { text: '--', color: '#fff' }
   }
 
-  const config = effectList.find(item => item.id === currentDevice.value.id)
+  const config = devicePVList.find(item => item.id === currentDevice.value.id)
   if (!config) {
     return { text: '正常', color: '#00FF7A' }
   }
@@ -114,17 +153,41 @@ const deviceStatus = computed(() => {
   }
 })
 
-onMounted(() => {
-})
 const showContent = ref(false)
+const showRightContent = ref(false)
+const alarmList = computed(() => store.state.alarmList)
+
 onMounted(() => {
+  store.dispatch('startPollingAlarms');
   setTimeout(() => {
     showContent.value = true
+    showRightContent.value = true
   }, 100) // slight delay to allow DOM to render first, then apply transition
 })
+
+onUnmounted(() => {
+  const el = document.getElementById('map_tool')
+  if (el) {
+    el.style.transform = `translateX(0px)`
+    el.style.transition = `transform 1s`
+  }
+})
+
 const showContentFuc = () => {
   showContent.value = !showContent.value
 }
+
+const showRightContentFuc = () => {
+  showRightContent.value = !showRightContent.value
+}
+
+watch(showRightContent, (val) => {
+  const el = document.getElementById('map_tool')
+  if (el) {
+    el.style.transform = `translateX(${val ? -374 : 0}px)`
+    el.style.transition = `transform 1s`
+  }
+})
 
 const queryDeviceData = async (val) => {
   currentDevice.value = val
@@ -295,6 +358,36 @@ const showWaterEffect = (id, value) => {
 
 <style lang="scss" scoped>
 @import url('./FireStatistics.scss');
+
+:deep(.custom-table) {
+  --el-table-border: none;
+  --el-table-border-color: rgba(12, 137, 234, 0.2);
+  --el-table-header-bg-color: rgba(19, 44, 69, 0.8);
+  --el-table-header-text-color: #7dc2fe;
+  --el-table-tr-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(12, 137, 234, 0.2);
+  --el-table-text-color: #fff;
+  --el-fill-color-blank: transparent;
+  --el-table-bg-color: transparent;
+  background-color: transparent;
+
+  tr {
+    background-color: transparent;
+  }
+
+  th.el-table__cell,
+  td.el-table__cell {
+    border-bottom: 1px solid var(--el-table-border-color);
+  }
+
+  th.el-table__cell {
+    background-color: var(--el-table-header-bg-color);
+  }
+
+  &::before {
+    display: none;
+  }
+}
 </style>
 
 <style lang="scss">

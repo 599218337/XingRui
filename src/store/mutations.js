@@ -68,8 +68,10 @@ export default {
     setWeather(state, data) {
         state.weather = data;
     },
-
-
-
-
+    setAlarmList(state, data) {
+        state.alarmList = data;
+    },
+    setIsPollingAlarms(state, data) {
+        state.isPollingAlarms = data;
+    }
 }
