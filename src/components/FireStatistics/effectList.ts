@@ -1,7 +1,7 @@
 export const effectList = [
     {
         id: '_2TIC_1201_AI1_PV',
-        point: [111.4096999303666, 30.55585781581719],
+        flytoPoint: [111.4096689303666, 30.55586890581709],
         flyto: [-50, -55, 25],
         maxValue: 75,
         minValue: 40,
@@ -17,7 +17,8 @@ export const effectList = [
             111.40980691257805, 30.55591109045622],
         maxValue: 2700,
         minValue: 1000,
-        flyto: [-30, -35, 25]
+        flytoPoint: [111.40975785200963, 30.555853347733047],
+        flyto: [-50, -35, 25]
     },
     {
         id: '_2LI_1205_AI1_PV',
@@ -28,7 +29,8 @@ export const effectList = [
         modelBottom: 2.2,
         maxValue: 3200,
         minValue: 200,
-        flyto: [-48, -35, 25],
+        flytoPoint: [111.40955609887279, 30.55578309783742],
+        flyto: [-54, -35, 25],
         waterFrequency: 5000,
         waterAmplitude: 0.1,
         waterAnimationSpeed: 0.01

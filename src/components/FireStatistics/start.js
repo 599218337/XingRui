@@ -81,10 +81,9 @@ export async function fetchDeviceData(id) {
 
     const data = await response.json()
     if (data.code === 200 && data.data && data.data[inputKey]) {
-        console.log('获取设备数据成功:', data.data[inputKey])
         // 只返回响应数据里面的 value
         return data.data[inputKey].value
     } else {
         throw new Error(data.message || '获取数据失败或格式不正确')
     }
-}
+}

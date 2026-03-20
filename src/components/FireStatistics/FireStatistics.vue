@@ -7,6 +7,25 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
+  <!-- 临时调试列表: 移至页面上方正中间 -->
+  <div class="debug-list-container">
+    <div class="debug-header">调试列表: 设备位号 ({{ filteredDebugList.length }})</div>
+    <el-input v-model="debugSearch" placeholder="搜索 ID 或名称..." size="small" clearable class="debug-search-input" />
+    <div class="debug-scroll-area">
+      <div v-for="item in filteredDebugList" :key="item.id" class="contentItem debug-list-item">
+        <div class="Item" @click="queryDeviceData(item)" :title="item.name">
+          <div class="point" style="background: #00FF7A"></div>
+          <div class="text"><span style="color: #FFA940; margin-right: 4px;">{{ item.id }}</span> {{ item.name }}</div>
+        </div>
+        <div class="icon">
+          <el-tooltip content="查看 (Fly to)" placement="top" popper-class="iconTooltip" :offset="3">
+            <div class="view" @click.stop="queryDeviceData(item)"></div>
+          </el-tooltip>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="fireStatistics"
     :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
     <div class="widget">
@@ -73,7 +92,7 @@
           <div class="device-detail-popup__row">
             <span class="device-detail-popup__label">当前状态</span>
             <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text
-            }}</span>
+              }}</span>
           </div>
         </div>
       </div>
@@ -84,10 +103,15 @@
           <span>历史告警</span>
         </div>
         <div class="content" style="padding: 0;">
-          <el-table class="custom-table" :data="[]" style="width: 100%; height: 100%;" empty-text="暂无历史报警">
-            <el-table-column prop="time" label="报警时间" width="160"></el-table-column>
+          <el-table class="custom-table" v-loading="deviceHistoryLoading" :data="deviceHistoryAlarms"
+            style="width: 100%;" height="150" empty-text="暂无历史报警" element-loading-background="rgba(8, 15, 24, 0.4)">
+            <el-table-column prop="time" label="报警时间" width="150"></el-table-column>
             <el-table-column prop="value" label="报警数值" width="100"></el-table-column>
-            <el-table-column prop="type" label="报警类型"></el-table-column>
+            <el-table-column prop="type" label="报警类型">
+              <template #default="scope">
+                <span :style="{ color: scope.row.color }">{{ scope.row.type }}</span>
+              </template>
+            </el-table-column>
           </el-table>
         </div>
       </div>
@@ -101,16 +125,35 @@
     <div id="fireBtnRight" @click="showRightContentFuc"
       :style="{ background: showRightContent ? 'url(/image/zhankai.png)' : 'url(/image/shouqi.png)', backgroundSize: '100% 100%' }">
     </div>
-    <div class="widget">
-      <div class="header">
+    <div class="widget" style="display: flex; flex-direction: column;">
+      <div class="header" style="flex: none;">
         <span>历史告警</span>
       </div>
-      <div class="content" style="padding: 0;">
-        <el-table class="custom-table" :data="[]" style="width: 100%; height: 100%;" empty-text="暂无历史报警">
+      <div class="search-box custom-search"
+        style="padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: none;">
+        <el-date-picker v-model="searchTimeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期"
+          end-placeholder="结束日期" value-format="YYYY-MM-DD HH:mm:ss" size="small" style="width: 100%;"
+          popper-class="custom-popper" :teleported="false" @change="fetchGlobalHistoryAlarms" />
+        <el-select v-model="searchName" placeholder="请选择设备名称" size="small" clearable filterable style="width: 100%;"
+          popper-class="custom-popper" :teleported="false" empty-text="暂无匹配设备" @change="fetchGlobalHistoryAlarms">
+          <el-option v-for="item in devicePVList" :key="item.id" :label="`${item.name} (${item.id})`" :value="item.id">
+            <span style="float: left">{{ item.name }}</span>
+            <span style="float: right; color: rgba(125, 194, 254, 0.6); font-size: 12px; margin-left: 15px;">{{ item.id
+              }}</span>
+          </el-option>
+        </el-select>
+      </div>
+      <div class="content" style="padding: 0; flex: 1; min-height: 0;">
+        <el-table class="custom-table" v-loading="globalHistoryLoading" :data="globalHistoryAlarms"
+          style="width: 100%; height: 100%;" empty-text="暂无历史报警" element-loading-background="rgba(19, 44, 69, 0.4)">
           <el-table-column prop="time" label="报警时间" width="95" show-overflow-tooltip></el-table-column>
           <el-table-column prop="name" label="设备名称" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="value" label="报警数值" width="80"></el-table-column>
-          <el-table-column prop="type" label="类型" width="55" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="value" label="报警数值" width="85"></el-table-column>
+          <el-table-column prop="type" label="类型" width="60" show-overflow-tooltip>
+            <template #default="scope">
+              <span :style="{ color: scope.row.color }">{{ scope.row.type }}</span>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
       <div class="line"></div>
@@ -123,31 +166,118 @@ import { ref, watch, reactive, onMounted, onUnmounted, computed, markRaw } from 
 import { useStore } from "vuex";
 const store = useStore();
 import { ElMessage } from 'element-plus';
-import { devicePVList } from './devicesPVList';
 import { effectList } from './effectList';
 import { fetchDeviceData } from './start';
 import * as gs3d from '/public/gs3d/index';
+import { devicePVList } from './devicesPVList';
+
 const { viewer } = defineProps(['viewer'])
 const dialogVisible = ref(false)
 const loading = ref(false)
 const currentDevice = ref({})
 const currentValue = ref('')
+const debugSearch = ref('')
+const filteredDebugList = computed(() => {
+  if (!debugSearch.value) return devicePVList
+  const s = debugSearch.value.toLowerCase()
+  return devicePVList.filter(item =>
+    item.id.toLowerCase().includes(s) ||
+    item.name.toLowerCase().includes(s)
+  )
+})
+
+// History Alarms Logic
+const deviceHistoryAlarms = ref([])
+const globalHistoryAlarms = ref([])
+const searchTimeRange = ref([])
+const searchName = ref('')
+const globalHistoryLoading = ref(false)
+const deviceHistoryLoading = ref(false)
+
+const fetchHistoryAlarms = async (params) => {
+  try {
+    const queryParams = new URLSearchParams()
+    if (params.deviceId) queryParams.append('deviceId', params.deviceId)
+    if (params.startTime) queryParams.append('startTime', params.startTime)
+    if (params.endTime) queryParams.append('endTime', params.endTime)
+
+    const res = await fetch(`/nodeApi/alarmsHistory?${queryParams.toString()}`)
+    const result = await res.json()
+    if (result.code === 200) {
+      return result.data || []
+    }
+  } catch (e) {
+    console.error('Fetch history alarms error:', e)
+  }
+  return []
+}
+
+const formatAlarms = (list) => {
+  return list.map(item => {
+    let typeStr = item.alarm_type === 'HIGH' ? '高报' : item.alarm_type === 'LOW' ? '低报' : (item.alarm_type || item.type || '告警');
+    if (typeStr === 'HIGH') typeStr = '高报';
+    if (typeStr === 'LOW') typeStr = '低报';
+
+    let color = '#FF4D4F';
+    if (typeStr === '低报') color = '#FFA940';
+
+    let timeStr = item.alert_time || item.time || item.created_at;
+    if (timeStr) {
+      let d = new Date(timeStr);
+      if (isNaN(d.getTime()) && typeof timeStr === 'string') {
+        d = new Date(timeStr.replace(/-/g, '/'));
+      }
+      if (!isNaN(d.getTime())) {
+        const MM = String(d.getMonth() + 1).padStart(2, '0');
+        const DD = String(d.getDate()).padStart(2, '0');
+        const HH = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        timeStr = `${MM}/${DD} ${HH}:${mm}`;
+      }
+    }
+
+    let rawValue = item.pv_value !== undefined && item.pv_value !== null ? item.pv_value : item.value;
+    let valueStr = rawValue !== undefined && rawValue !== null && rawValue !== '' ? Number(rawValue).toFixed(4) : '--';
+
+    return {
+      time: timeStr,
+      name: item.device_name || item.name,
+      value: valueStr,
+      type: typeStr,
+      color: color
+    }
+  })
+}
+
+const fetchDeviceHistoryAlarms = async (deviceId) => {
+  deviceHistoryLoading.value = true
+  const data = await fetchHistoryAlarms({ deviceId })
+  deviceHistoryAlarms.value = formatAlarms(data)
+  deviceHistoryLoading.value = false
+}
+
+const fetchGlobalHistoryAlarms = async () => {
+  globalHistoryLoading.value = true
+  const params = {}
+  if (searchName.value) params.deviceId = searchName.value
+  if (searchTimeRange.value && searchTimeRange.value.length === 2) {
+    params.startTime = searchTimeRange.value[0]
+    params.endTime = searchTimeRange.value[1]
+  }
+  const data = await fetchHistoryAlarms(params)
+  globalHistoryAlarms.value = formatAlarms(data)
+  globalHistoryLoading.value = false
+}
 
 const deviceStatus = computed(() => {
   if (!currentDevice.value || currentValue.value === '' || currentValue.value === null || currentValue.value === undefined) {
     return { text: '--', color: '#fff' }
   }
 
-  const config = devicePVList.find(item => item.id === currentDevice.value.id)
-  if (!config) {
-    return { text: '正常', color: '#00FF7A' }
-  }
+  const alarmItem = store.state.alarmList.find(item => item.id === currentDevice.value.id)
 
-  const val = Number(currentValue.value)
-  if (val > config.maxValue) {
-    return { text: '过高警报', color: '#FF4D4F' }
-  } else if (val < config.minValue) {
-    return { text: '过低警报', color: '#FFA940' }
+  if (alarmItem) {
+    return { text: alarmItem.alarmText + '警报', color: alarmItem.color }
   } else {
     return { text: '正常', color: '#00FF7A' }
   }
@@ -159,6 +289,7 @@ const alarmList = computed(() => store.state.alarmList)
 
 onMounted(() => {
   store.dispatch('startPollingAlarms');
+  fetchGlobalHistoryAlarms();
   setTimeout(() => {
     showContent.value = true
     showRightContent.value = true
@@ -193,6 +324,7 @@ const queryDeviceData = async (val) => {
   currentDevice.value = val
   dialogVisible.value = true
   loading.value = true
+  fetchDeviceHistoryAlarms(val.id)
   try {
     const value = await fetchDeviceData(val.id)
     currentValue.value = value
@@ -213,151 +345,204 @@ const showWaterEffect = (id, value) => {
   const config = effectList.find(item => item.id === id)
   if (!config) return
 
-  // 如果没有 type，表示不需要渲染效果，直接执行 flyto
-  if (!config.type) {
-    if (config.point) {
+  // 1. 如果有 type，渲染水体效果
+  if (config.type) {
+    const topWaterLevel = config.modelBottom + (Number(value) / config.maxValue) * config.modelHeight;    // 水面高度
+    const poolBottomLevel = config.modelBottom;  // 底部高度
+
+    let geometryInstance, surfaceGeometryInstance;
+
+    if (config.type.includes('circle')) {
       const centerPosition = gs3d.Cesium.Cartesian3.fromDegrees(config.point[0], config.point[1]);
-      const flyToTarget = new gs3d.Cesium.BoundingSphere(centerPosition, 0);
-      viewer.camera.flyToBoundingSphere(flyToTarget, {
-        offset: new gs3d.Cesium.HeadingPitchRange(
-          gs3d.Cesium.Math.toRadians(config.flyto[0]),
-          gs3d.Cesium.Math.toRadians(config.flyto[1]),
-          config.flyto[2]
-        ),
-        duration: 1.5
+      const radius = config.radius;
+
+      geometryInstance = new gs3d.Cesium.GeometryInstance({
+        geometry: new gs3d.Cesium.EllipseGeometry({
+          center: centerPosition,
+          semiMajorAxis: radius,
+          semiMinorAxis: radius,
+          height: poolBottomLevel,
+          extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
+        }),
+        attributes: {
+          color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+            new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
+          )
+        }
+      });
+
+      surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
+        geometry: new gs3d.Cesium.EllipseGeometry({
+          center: centerPosition,
+          semiMajorAxis: radius,
+          semiMinorAxis: radius,
+          height: topWaterLevel
+        }),
+        attributes: {
+          color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+            new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6)
+          )
+        }
+      });
+    } else {
+      const waterPositions = gs3d.Cesium.Cartesian3.fromDegreesArray(config.coordinates);
+
+      geometryInstance = new gs3d.Cesium.GeometryInstance({
+        geometry: new gs3d.Cesium.PolygonGeometry({
+          polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
+          height: poolBottomLevel,
+          extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
+        }),
+        attributes: {
+          color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
+            new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
+          )
+        }
+      });
+
+      surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
+        geometry: new gs3d.Cesium.PolygonGeometry({
+          polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
+          height: topWaterLevel,
+          vertexFormat: gs3d.Cesium.VertexFormat.POSITION_NORMAL_AND_ST
+        })
       });
     }
-    return;
-  }
 
-  const topWaterLevel = config.modelBottom + (Number(value) / config.maxValue) * config.modelHeight;    // 水面高度
-  const poolBottomLevel = config.modelBottom;  // 底部高度
-
-  let geometryInstance, surfaceGeometryInstance, flyToTarget;
-
-  if (config.type.includes('circle')) {
-    const centerPosition = gs3d.Cesium.Cartesian3.fromDegrees(config.point[0], config.point[1]);
-    const radius = config.radius;
-
-    geometryInstance = new gs3d.Cesium.GeometryInstance({
-      geometry: new gs3d.Cesium.EllipseGeometry({
-        center: centerPosition,
-        semiMajorAxis: radius,
-        semiMinorAxis: radius,
-        height: poolBottomLevel,
-        extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
-      }),
-      attributes: {
-        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
-          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4) // 调节 0.4 改变水的清澈度
-        )
-      }
-    });
-
-    // surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
-    //   geometry: new gs3d.Cesium.EllipseGeometry({
-    //     center: centerPosition,
-    //     semiMajorAxis: radius,
-    //     semiMinorAxis: radius,
-    //     height: topWaterLevel
-    //   })
-    // });
-    surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
-      geometry: new gs3d.Cesium.EllipseGeometry({
-        center: centerPosition,
-        semiMajorAxis: radius,
-        semiMinorAxis: radius,
-        height: topWaterLevel
-      }),
-      // 【必须加上这一句】
-      attributes: {
-        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
-          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6)
-        )
-      }
-    });
-
-    flyToTarget = new gs3d.Cesium.BoundingSphere(centerPosition, radius);
-  } else {
-    const waterPositions = gs3d.Cesium.Cartesian3.fromDegreesArray(config.coordinates);
-
-    geometryInstance = new gs3d.Cesium.GeometryInstance({
-      geometry: new gs3d.Cesium.PolygonGeometry({
-        polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
-        height: poolBottomLevel,
-        extrudedHeight: Math.max(poolBottomLevel + 0.01, topWaterLevel - 0.01)
-      }),
-      attributes: {
-        color: gs3d.Cesium.ColorGeometryInstanceAttribute.fromColor(
-          new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
-        )
-      }
-    });
-
-    surfaceGeometryInstance = new gs3d.Cesium.GeometryInstance({
-      geometry: new gs3d.Cesium.PolygonGeometry({
-        polygonHierarchy: new gs3d.Cesium.PolygonHierarchy(waterPositions),
-        height: topWaterLevel,
-        vertexFormat: gs3d.Cesium.VertexFormat.POSITION_NORMAL_AND_ST
+    const waterVolumePrimitive = new gs3d.Cesium.Primitive({
+      geometryInstances: geometryInstance,
+      appearance: new gs3d.Cesium.PerInstanceColorAppearance({
+        translucent: true,
+        closed: true
       })
     });
 
-    flyToTarget = gs3d.Cesium.BoundingSphere.fromPoints(waterPositions);
+    const waterSurfacePrimitive = new gs3d.Cesium.Primitive({
+      geometryInstances: surfaceGeometryInstance,
+      appearance: new gs3d.Cesium.EllipsoidSurfaceAppearance({
+        aboveGround: true,
+        material: gs3d.Cesium.Material.fromType('Water', {
+          baseWaterColor: new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6),
+          normalMap: '/image/waterNormals.jpg',
+          frequency: 100.0,
+          animationSpeed: 0.02,
+          amplitude: 5.0
+        })
+      })
+    });
+
+    viewer.scene.primitives.add(waterVolumePrimitive);
+    viewer.scene.primitives.add(waterSurfacePrimitive);
+    currentPrimitives.value.push(markRaw(waterVolumePrimitive), markRaw(waterSurfacePrimitive));
   }
 
-  // ==========================================
-  // 第一层：水体 (提供体积感和深度)
-  // ==========================================
-  const waterVolumePrimitive = new gs3d.Cesium.Primitive({
-    geometryInstances: geometryInstance,
-    // appearance: new gs3d.Cesium.MaterialAppearance({
-    //   material: gs3d.Cesium.Material.fromType('Color', {
-    //     color: new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.4)
-    //   }),
-    //   translucent: true,
-    //   closed: true
-    // })
-    appearance: new gs3d.Cesium.PerInstanceColorAppearance({
-      translucent: true,
-      closed: true
-    })
-  });
-
-  // ==========================================
-  // 第二层：水面 (提供生动的波纹和反光)
-  // ==========================================
-  const waterSurfacePrimitive = new gs3d.Cesium.Primitive({
-    geometryInstances: surfaceGeometryInstance,
-    appearance: new gs3d.Cesium.EllipsoidSurfaceAppearance({
-      aboveGround: true,
-      material: gs3d.Cesium.Material.fromType('Water', {
-        baseWaterColor: new gs3d.Cesium.Color(0.0, 0.4, 0.8, 0.6),
-        normalMap: '/image/waterNormals.jpg',
-        frequency: 100.0,
-        animationSpeed: 0.02,
-        amplitude: 5.0
-      })
-    })
-  });
-
-  viewer.scene.primitives.add(waterVolumePrimitive);
-  viewer.scene.primitives.add(waterSurfacePrimitive);
-  currentPrimitives.value.push(markRaw(waterVolumePrimitive), markRaw(waterSurfacePrimitive));
-
-  // 飞向目标区域
-  viewer.camera.flyToBoundingSphere(flyToTarget, {
-    offset: new gs3d.Cesium.HeadingPitchRange(
-      gs3d.Cesium.Math.toRadians(config.flyto[0]),
-      gs3d.Cesium.Math.toRadians(config.flyto[1]),
-      config.flyto[2]
-    ),
-    duration: 1.5
-  });
+  // 2. 统一飞向目标点 (始终飞向 config.point)
+  if (config.flytoPoint && config.flyto) {
+    const centerPosition = gs3d.Cesium.Cartesian3.fromDegrees(config.flytoPoint[0], config.flytoPoint[1]);
+    const flyToTarget = new gs3d.Cesium.BoundingSphere(centerPosition, 0);
+    viewer.camera.flyToBoundingSphere(flyToTarget, {
+      offset: new gs3d.Cesium.HeadingPitchRange(
+        gs3d.Cesium.Math.toRadians(config.flyto[0]),
+        gs3d.Cesium.Math.toRadians(config.flyto[1]),
+        config.flyto[2]
+      ),
+      duration: 1.5
+    });
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 @import url('./FireStatistics.scss');
+
+.debug-list-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: 400px;
+  background: rgba(8, 22, 38, 0.95);
+  border: 1px solid rgba(12, 137, 234, 0.8);
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(12, 137, 234, 0.5);
+
+  .debug-header {
+    color: #7dc2fe;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(12, 137, 234, 0.3);
+    padding-bottom: 4px;
+    text-align: center;
+  }
+
+  .debug-search-input {
+    margin-bottom: 8px;
+
+    :deep(.el-input__wrapper) {
+      background-color: rgba(19, 44, 69, 0.8) !important;
+      box-shadow: 0 0 0 1px rgba(12, 137, 234, 0.5) inset !important;
+    }
+
+    :deep(.el-input__inner) {
+      color: #fff !important;
+      font-size: 12px;
+    }
+  }
+
+  .debug-scroll-area {
+    overflow-y: auto;
+    flex: 1;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(12, 137, 234, 0.6);
+      border-radius: 3px;
+    }
+
+    .contentItem {
+      margin-bottom: 2px;
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(12, 137, 234, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .Item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        cursor: pointer;
+        min-width: 0;
+
+        .text {
+          color: #fff;
+          font-size: 12px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          &:hover {
+            color: #7dc2fe;
+          }
+        }
+      }
+
+      .icon {
+        flex: none;
+      }
+    }
+  }
+}
 
 :deep(.custom-table) {
   --el-table-border: none;
@@ -388,6 +573,45 @@ const showWaterEffect = (id, value) => {
     display: none;
   }
 }
+
+:deep(.custom-search) {
+
+  .el-input__wrapper,
+  .el-select__wrapper {
+    background-color: rgba(19, 44, 69, 0.4) !important;
+    border: 1px solid rgba(12, 137, 234, 0.4) !important;
+    box-shadow: none !important;
+  }
+
+  .el-input__wrapper:hover,
+  .el-select__wrapper:hover {
+    border-color: rgba(12, 137, 234, 0.8) !important;
+  }
+
+  .el-input__wrapper.is-focus,
+  .el-select__wrapper.is-focused,
+  .el-select__wrapper.is-hovering {
+    border-color: #7dc2fe !important;
+  }
+
+  .el-input__inner,
+  .el-select__selected-item {
+    color: #fff !important;
+  }
+
+  .el-select__placeholder {
+    color: #7dc2fe !important;
+  }
+
+  .el-range-input {
+    color: #fff !important;
+    background: transparent !important;
+  }
+
+  .el-range-separator {
+    color: #7dc2fe !important;
+  }
+}
 </style>
 
 <style lang="scss">
@@ -395,5 +619,141 @@ const showWaterEffect = (id, value) => {
   background-color: rgba(39, 53, 70, 1) !important;
   border: 1px solid rgba(12, 137, 234, 0.40) !important;
   border-radius: 2px !important;
+}
+
+.custom-popper.el-popper {
+  background-color: rgba(8, 22, 38, 0.95) !important;
+  border: 1px solid rgba(12, 137, 234, 0.6) !important;
+  box-shadow: 0 0 15px rgba(12, 137, 234, 0.4) !important;
+}
+
+.custom-popper .el-popper__arrow::before {
+  background-color: rgba(8, 22, 38, 0.95) !important;
+  border: 1px solid rgba(12, 137, 234, 0.6) !important;
+}
+
+.custom-popper .el-select-dropdown__item {
+  color: #7dc2fe !important;
+}
+
+.custom-popper .el-select-dropdown__empty {
+  color: #7dc2fe !important;
+  background-color: transparent !important;
+}
+
+.custom-popper .el-select-dropdown__item:hover,
+.custom-popper .el-select-dropdown__item.hover,
+.custom-popper .el-select-dropdown__item.is-hovering {
+  background-color: rgba(12, 137, 234, 0.3) !important;
+  color: #fff !important;
+}
+
+.custom-popper .el-select-dropdown__item.selected {
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.custom-popper .el-picker-panel,
+.custom-popper .el-date-range-picker {
+  background: transparent !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.custom-popper .el-date-table th {
+  color: #7dc2fe !important;
+  border-bottom: 1px solid rgba(12, 137, 234, 0.2) !important;
+}
+
+.custom-popper .el-date-table td .el-date-table-cell {
+  color: #fff !important;
+}
+
+.custom-popper .el-date-table td.in-range .el-date-table-cell {
+  background-color: rgba(12, 137, 234, 0.2) !important;
+}
+
+.custom-popper .el-date-table td.start-date .el-date-table-cell__text,
+.custom-popper .el-date-table td.end-date .el-date-table-cell__text {
+  background-color: #0c89ea !important;
+}
+
+.custom-popper .el-date-picker__header-label,
+.custom-popper .el-date-range-picker__header div {
+  color: #7dc2fe !important;
+}
+
+.custom-popper .el-picker-panel__icon-btn {
+  color: #7dc2fe !important;
+}
+
+.custom-popper .el-time-panel {
+  background-color: rgba(8, 22, 38, 0.95) !important;
+  border: 1px solid rgba(12, 137, 234, 0.6) !important;
+}
+
+.custom-popper .el-time-spinner__item {
+  color: #7dc2fe !important;
+}
+
+.custom-popper .el-time-spinner__item:hover {
+  background-color: rgba(12, 137, 234, 0.3) !important;
+}
+
+.custom-popper .el-time-spinner__item.active {
+  color: #fff !important;
+}
+
+.custom-popper .el-date-table td.disabled .el-date-table-cell {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #666 !important;
+}
+
+/* Time Picker Footer & Buttons */
+.custom-popper .el-picker-panel__footer {
+  background-color: rgba(8, 22, 38, 0.98) !important;
+  border-top: 1px solid rgba(12, 137, 234, 0.4) !important;
+}
+
+.custom-popper .el-button {
+  background-color: rgba(19, 44, 69, 0.6) !important;
+  border: 1px solid rgba(12, 137, 234, 0.6) !important;
+  color: #7dc2fe !important;
+}
+
+.custom-popper .el-button:hover {
+  background-color: rgba(12, 137, 234, 0.3) !important;
+  color: #fff !important;
+  border-color: #7dc2fe !important;
+}
+
+.custom-popper .el-button.is-text {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.custom-popper .el-button--primary {
+  background-color: rgba(12, 137, 234, 0.4) !important;
+  border-color: #7dc2fe !important;
+  color: #fff !important;
+}
+
+/* Time Panel Inputs */
+.custom-popper .el-time-panel__content {
+  border-top: 1px solid rgba(12, 137, 234, 0.2) !important;
+}
+
+.custom-popper .el-time-panel__footer {
+  border-top: 1px solid rgba(12, 137, 234, 0.2) !important;
+  background-color: rgba(8, 22, 38, 0.98) !important;
+}
+
+.custom-popper .el-input__wrapper {
+  background-color: rgba(19, 44, 69, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(12, 137, 234, 0.4) inset !important;
+}
+
+.custom-popper .el-input__inner {
+  color: #fff !important;
 }
 </style>

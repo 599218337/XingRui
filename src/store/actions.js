@@ -14,9 +14,6 @@
  * @FilePath: \screen-web\src\store\actions.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import { fetchDeviceData } from '../components/FireStatistics/start';
-import { devicePVList } from '../components/FireStatistics/devicesPVList';
-
 // 设置函数，使用commit来提交mutations中状态值的改变，
 // 但是此时state的状态值还是没有改变，需要通过$dispatch来分配actions；
 
@@ -60,6 +57,9 @@ export default {
   setShowPerson(context, data) {
     context.commit('setShowPerson', data);
   },
+  setShowGds(context, data) {
+    context.commit('setShowGds', data);
+  },
   setShowTimeWeather(context, data) {
     context.commit('setShowTimeWeather', data);
   },
@@ -72,58 +72,64 @@ export default {
   setPersonArray(context, data) {
     context.commit('setPersonArray', data);
   },
-    setWeather(context, data){
-        context.commit('setWeather', data);
-    },
-    setAlarmList({ commit }, data) {
-        commit('setAlarmList', data);
-    },
-    async startPollingAlarms({ commit, state }) {
-        if (state.isPollingAlarms) return;
-        commit('setIsPollingAlarms', true);
-        const alarmMap = {};
-        
-        while (state.isPollingAlarms) {
-            for (const item of devicePVList) {
-                if (!state.isPollingAlarms) break;
-                try {
-                    const val = await fetchDeviceData(item.id);
-                    if (val === null || val === undefined || val === '') continue;
-                    const numValue = Number(val);
+  setWeather(context, data) {
+    context.commit('setWeather', data);
+  },
+  setAlarmList({ commit }, data) {
+    commit('setAlarmList', data);
+  },
+  async startPollingAlarms({ commit, state }) {
+    if (state.isPollingAlarms) return;
+    commit('setIsPollingAlarms', true);
 
-                    let isAlarm = false;
-                    let alarmText = '';
-                    let color = '';
+    while (state.isPollingAlarms) {
+      if (!state.isPollingAlarms) break;
+      try {
+        const response = await fetch('/nodeApi/triggerAlarms');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.code === 200 && result.data && result.data.newAlarms) {
+            const alarms = result.data.newAlarms.map(item => {
+              const now = new Date();
+              const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
-                    if (item.maxValue !== undefined && item.maxValue !== null && numValue > item.maxValue) {
-                        isAlarm = true;
-                        alarmText = '高报';
-                        color = '#FF4D4F';
-                    } else if (item.minValue !== undefined && item.minValue !== null && numValue < item.minValue) {
-                        isAlarm = true;
-                        alarmText = '低报';
-                        color = '#FFA940';
-                    }
+              let alarmText = '告警';
+              let color = '#FF4D4F';
 
-                    if (isAlarm) {
-                        const now = new Date();
-                        const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                        alarmMap[item.id] = { ...item, alarmText, color, currentValue: numValue, time, address: '系统设备' };
-                    } else {
-                        if (alarmMap[item.id]) {
-                            delete alarmMap[item.id];
-                        }
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch data for', item.id, e);
-                }
+              if (item.alarm_type === 'HIGH') {
+                alarmText = '高报';
+                color = '#FF4D4F';
+              } else if (item.alarm_type === 'LOW') {
+                alarmText = '低报';
+                color = '#FFA940';
+              }
+
+              return {
+                id: item.device_id,
+                name: item.device_name,
+                alarmText,
+                color,
+                currentValue: item.pv_value,
+                time,
+                address: '系统设备'
+              };
+            });
+
+            if (alarms.length > 0) {
+              // 将最新的告警累加到现有列表前面
+              const currentList = state.alarmList || [];
+              commit('setAlarmList', [...alarms, ...currentList]);
             }
-            commit('setAlarmList', Object.values(alarmMap));
-            // slight delay before starting the next poll round
-            await new Promise(r => setTimeout(r, 2000));
+          }
         }
-    },
-    stopPollingAlarms({ commit }) {
-        commit('setIsPollingAlarms', false);
+      } catch (e) {
+        console.error('Failed to fetch alarms', e);
+      }
+      // slight delay before starting the next poll round
+      await new Promise(r => setTimeout(r, 20000));
     }
+  },
+  stopPollingAlarms({ commit }) {
+    commit('setIsPollingAlarms', false);
+  }
 }

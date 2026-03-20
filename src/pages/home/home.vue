@@ -12,6 +12,7 @@ import {
   cameraStatistics,
   fireStatistics,
   personStatistics,
+  gdsStatistics,
   viewChange,
 } from '@/components';
 import * as gs3d from '/public/gs3d/index';
@@ -447,6 +448,12 @@ const pickPoint = () => {
     <Transition name="slide-fade3">
       <div class="left_wrapper_camera" v-if="store.state.showFire">
         <fireStatistics :viewer="viewer"></fireStatistics>
+      </div>
+    </Transition>
+    <!-- 气体报警 -->
+    <Transition name="slide-fade3">
+      <div class="left_wrapper_camera" v-if="store.state.showGds">
+        <gdsStatistics :viewer="viewer"></gdsStatistics>
       </div>
     </Transition>
     <!-- 人员巡视 -->

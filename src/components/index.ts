@@ -33,7 +33,7 @@ import shareSetting from "./ShareSetting/ShareSetting.vue";
 import cameraStatistics from "./CameraStatistics/CameraStatistics.vue";
 import fireStatistics from "./FireStatistics/FireStatistics.vue";
 import personStatistics from "./PersonStatistics/PersonStatistics.vue";
-
+import gdsStatistics from "./GdsStatistics/GdsStatistics.vue";
 import timeWeather from "./TimeWeather/TimeWeather.vue";
 
 
@@ -71,6 +71,7 @@ export {
   cameraStatistics,
   fireStatistics,
   personStatistics,
-  timeWeather
+  timeWeather,
+  gdsStatistics
 };
 

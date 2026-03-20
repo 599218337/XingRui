@@ -65,13 +65,14 @@ const btnArray = ref([
 
 let isSameIndex = true
 const changeBtn = (id) => {
-  if (id !== 4 && active.value == id && isSameIndex) {
+  if (active.value == id && isSameIndex) {
     isSameIndex = false
     active.value = null
     // removeCustomPOI()
     store.state.showCamera && store.dispatch("setShowCamera", false);
     store.state.showFire && store.dispatch("setShowFire", false);
     store.state.showPerson && store.dispatch("setShowPerson", false);
+    store.state.showDevices && store.dispatch("setShowDevices", false);
     if (btnArray.value[0].label == '收起图表') {
       btnArray.value[0].label = '展开图表'
       store.dispatch("setShowAside", false);
@@ -86,6 +87,7 @@ const changeBtn = (id) => {
       store.state.showFire && store.dispatch("setShowFire", false);
       store.state.showPerson && store.dispatch("setShowPerson", false);
       store.state.showDevices && store.dispatch("setShowDevices", false);
+      store.state.showGds && store.dispatch("setShowGds", false);
       if (btnArray.value[0].label == '收起图表') {
         btnArray.value[0].label = '展开图表'
         store.dispatch("setShowAside", false);
@@ -103,6 +105,7 @@ const changeBtn = (id) => {
       store.state.showPerson && store.dispatch("setShowPerson", false);
       store.state.showFire && store.dispatch("setShowFire", false);
       store.state.showDevices && store.dispatch("setShowDevices", false);
+      store.state.showGds && store.dispatch("setShowGds", false);
       !store.state.showCamera && store.dispatch("setShowCamera", true);
       break;
     case 2:
@@ -113,6 +116,7 @@ const changeBtn = (id) => {
       store.state.showCamera && store.dispatch("setShowCamera", false);
       store.state.showPerson && store.dispatch("setShowPerson", false);
       store.state.showDevices && store.dispatch("setShowDevices", false);
+      store.state.showGds && store.dispatch("setShowGds", false);
       !store.state.showFire && store.dispatch("setShowFire", true);
       break;
     case 3:
@@ -123,6 +127,7 @@ const changeBtn = (id) => {
       store.state.showCamera && store.dispatch("setShowCamera", false);
       store.state.showFire && store.dispatch("setShowFire", false);
       store.state.showDevices && store.dispatch("setShowDevices", false);
+      store.state.showGds && store.dispatch("setShowGds", false);
       !store.state.showPerson && store.dispatch("setShowPerson", true);
       break;
     // case 4:
@@ -141,9 +146,10 @@ const changeBtn = (id) => {
       store.state.showPerson && store.dispatch("setShowPerson", false);
       store.state.showCamera && store.dispatch("setShowCamera", false);
       store.state.showFire && store.dispatch("setShowFire", false);
+      store.state.showGds && store.dispatch("setShowGds", false);
       !store.state.showDevices && store.dispatch("setShowDevices", true);
       break;
-    case 6:
+    case 5:
       if (btnArray.value[0].label == '收起图表') {
         btnArray.value[0].label = '展开图表'
         store.dispatch("setShowAside", false);
@@ -152,7 +158,9 @@ const changeBtn = (id) => {
       store.state.showCamera && store.dispatch("setShowCamera", false);
       store.state.showFire && store.dispatch("setShowFire", false);
       store.state.showDevices && store.dispatch("setShowDevices", false);
+      !store.state.showGds && store.dispatch("setShowGds", true);
       break;
+
     default:
       ElMessage({
         message: '功能开发中，敬请期待......',

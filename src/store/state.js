@@ -19,6 +19,7 @@ export default {
   showFire: false,
   showDevices: false,
   showPerson: false,
+  showGds: false,
   showTimeWeather: false,
   cameraArray: [],
   fireArray: [],

@@ -53,6 +53,9 @@ export default {
   setShowPerson(state, data) {
     state.showPerson = data;
   },
+  setShowGds(state, data) {
+    state.showGds = data;
+  },
   setShowTimeWeather(state, data) {
     state.showTimeWeather = data;
   },
@@ -65,13 +68,13 @@ export default {
   setPersonArray(state, data) {
     state.personArray = data;
   },
-    setWeather(state, data) {
-        state.weather = data;
-    },
-    setAlarmList(state, data) {
-        state.alarmList = data;
-    },
-    setIsPollingAlarms(state, data) {
-        state.isPollingAlarms = data;
-    }
+  setWeather(state, data) {
+    state.weather = data;
+  },
+  setAlarmList(state, data) {
+    state.alarmList = data;
+  },
+  setIsPollingAlarms(state, data) {
+    state.isPollingAlarms = data;
+  }
 }

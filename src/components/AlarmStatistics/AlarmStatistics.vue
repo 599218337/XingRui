@@ -13,7 +13,7 @@
     </div>
     <div class="content">
 
-      <el-table :data="tableData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle">
+      <el-table :data="tableData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle" empty-text="暂无告警">
         <el-table-column prop="device" label="告警设备" />
         <el-table-column prop="time" label="时间" width="50" />
         <el-table-column prop="currentValue" label="实时值" width="70" />

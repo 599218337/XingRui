@@ -80,11 +80,11 @@ onMounted(() => {
         const currentItem = deviceList.find(item => item.设备位号 === id);
         try {
           const status = await fetchDeviceData(id);
-          
+
           if (status === undefined || status === null) {
             noValueDevices.push(currentItem);
           }
-          
+
           const isOnline = status === true || String(status).toLowerCase() === 'true';
 
           const targetRow = tableData.value.find(item => item.设备位号 === id);
@@ -104,10 +104,10 @@ onMounted(() => {
         }
       }));
     }
-    
+
     if (noValueDevices.length > 0) {
       console.log(`有 ${noValueDevices.length} 个设备接口未返回value或调用失败:`);
-      console.table(noValueDevices);
+      // console.table(noValueDevices);
     }
   };
 
