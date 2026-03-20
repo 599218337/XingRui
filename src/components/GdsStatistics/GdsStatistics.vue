@@ -95,7 +95,7 @@ const getNumericValue = (str) => {
 const getStatusColor = (item, value) => {
   const first = getNumericValue(item.first_alarm)
   const second = getNumericValue(item.second_alarm)
-  
+
   if (value >= second) return '#FF4D4F' // 2级报警 - 红色
   if (value >= first) return '#FFA940'  // 1级报警 - 橙色
   return '#00FF7A' // 正常 - 绿色

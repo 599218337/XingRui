@@ -16,7 +16,7 @@ import {
   viewChange,
 } from '@/components';
 import * as gs3d from '/public/gs3d/index';
-import { onMounted, onUnmounted, ref, reactive, watch, shallowRef } from 'vue'
+import { onMounted, onUnmounted, ref, reactive, watch, shallowRef, computed } from 'vue'
 import { useStore } from "vuex";
 
 import utils from '@/utils/utils'
@@ -24,6 +24,10 @@ import { applyShaderEffect, removeShaderEffect } from '@/utils/shaderEffects'
 const time = ref('')
 const activeEffect = ref<'fresnel' | 'xray' | null>(null)
 const isTransitioning = ref(false)
+const showTimeline = computed(() => activeEffect.value !== 'xray' && !isTransitioning.value)
+const timelineVisibility = computed(() => showTimeline.value ? 'visible' : 'hidden')
+const timelinePointerEvents = computed(() => showTimeline.value ? 'auto' : 'none')
+const footerBottom = computed(() => showTimeline.value ? '0px' : '-25px')
 let transitionTimer: ReturnType<typeof setTimeout> | null = null
 
 // 所有 3D Tiles 的 ID
@@ -401,9 +405,9 @@ const pickPoint = () => {
 <template>
   <div id="mapContainer"></div>
 
-  <div class="home" ref="homeref">
+  <div class="home" ref="homeref" id="home-container">
 
-    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
+    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -412,10 +416,7 @@ const pickPoint = () => {
     <div id="map_tool">
       <viewChange></viewChange>
     </div>
-    <div class="login">
-      <span class="btn1" @click="showTimeWeatherFuc">[设置]</span>&nbsp;&nbsp;&nbsp;
-      <span class="btn2" @click="loginOut">[退出系统]</span>
-    </div>
+
     <!--左侧图表 -->
     <Transition name="slide-fade">
       <div class="left_wrapper" v-show="store.state.showAside">
@@ -661,6 +662,16 @@ const pickPoint = () => {
 
 :deep(.cesium-viewer-timelineContainer) {
   z-index: 9999;
+  left: 0px !important;
+  right: 0px !important;
+  margin: 0px !important;
+  visibility: v-bind(timelineVisibility);
+  pointer-events: v-bind(timelinePointerEvents);
+}
+
+:deep(.footer_wrapper) {
+  bottom: v-bind(footerBottom) !important;
+  transition: bottom 0.3s ease-in-out;
 }
 
 /* --- 底部 赛博朋克“舵”切换盘 --- */

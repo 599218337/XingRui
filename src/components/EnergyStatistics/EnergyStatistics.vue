@@ -25,30 +25,73 @@
 import { ref, watch, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts';
 
-onMounted(() => {
-  nextTick(() => {
-    initChart()
 
-  })
+onMounted(async () => {
+  try {
+
+    const response = await fetch('/nodeApi/getEnergy')
+    if (!response.ok) throw new Error('Network response was not ok')
+    const result = await response.json()
+
+    const data = result.data || []
+
+    // 1. Sort by date descending to get the latest 6 entries
+    const sortedData = [...data].sort((a, b) => new Date(b.时间) - new Date(a.时间))
+    const lastEntries = sortedData.filter(item => item.时间).slice(0, 6)
+
+    // 2. Sort back to ascending for the chart X-axis
+    const chartData = lastEntries.sort((a, b) => new Date(a.时间) - new Date(b.时间))
+
+    // 3. Format data for ECharts (电能消耗 = 发电 - 上网电)
+    const source = chartData.map(item => {
+      const date = new Date(item.时间)
+      const formattedDate = (date.getMonth() + 1).toString().padStart(2, '0') + '-' +
+        date.getDate().toString().padStart(2, '0')
+
+      const generating = parseFloat(item['发电']) || 0
+      const gridConnected = parseFloat(item['上网电']) || 0
+      const consumption = Math.max(0, generating - gridConnected)
+
+      return [formattedDate, consumption.toFixed(2)]
+    })
+
+    await nextTick()
+    initChart(source)
+
+  } catch (error) {
+    console.error('Failed to fetch energy data:', error)
+  }
 })
 
-const initChart = () => {
+const initChart = (sourceData) => {
 
   var chartDom = document.getElementById('barchart');
   var myChart = echarts.init(chartDom);
   var option;
 
   option = {
-    legend: {},
-    tooltip: {},
+    legend: {
+      right: 10,
+      itemWidth: 12,
+      itemHeight: 12,
+      textStyle: {
+        color: '#EFF7FF',
+        fontSize: 12
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function (params) {
+        let res = params[0].name + '<br/>';
+        params.forEach(item => {
+          res += item.marker + item.seriesName + ': ' + item.value[1] + ' 万KWh';
+        });
+        return res;
+      }
+    },
     dataset: {
-      dimensions: ['total', '水（t）', '电（kwh）',],
-      source: [
-        ['车间名称1', 550, 610],
-        ['车间名称2', 760, 790],
-        ['车间名称3', 603, 635],
-        ['车间名称4', 810, 850],
-      ]
+      dimensions: ['时间', '电能消耗'],
+      source: sourceData
     },
     xAxis: {
       type: 'category',
@@ -74,49 +117,31 @@ const initChart = () => {
     },
     series: [
       {
+        name: '电能消耗',
         type: 'bar',
-        barWidth: 11,
+        barWidth: 18,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#00a8ff' },
             { offset: 1, color: '#0f3352' }
           ]),
+          borderRadius: [4, 4, 0, 0],
           opacity: 0.8
 
         },
-      },
-      {
-        type: 'bar',
-        barWidth: 11,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#eebb60' },
-            { offset: 1, color: '#412905' }
-          ]),
-          opacity: 0.8
-        }
       }
     ],
     grid:
     {
       z: 0,
-      left: '10%',
+      left: '12%',
       top: 35,
       right: '10%',
-      bottom: 20,
+      bottom: 25,
       containLabel: false,
       backgroundColor: 'rgba(0, 0, 0, 0)',
       borderWidth: 1,
       borderColor: '#fff'
-    },
-    legend: {
-      right: 10,
-      itemWidth: 12,
-      itemHeight: 12,
-      textStyle: {
-        color: '#EFF7FF',
-        fontSize: 12
-      }
     }
 
   };

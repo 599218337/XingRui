@@ -21,7 +21,7 @@
             </div>
             <div class="item-body">
               <div class="item-values-row">
-                <div class="item-value">{{ item.label2 }}mm</div>
+                <div class="item-value">{{ item.label2 }}吨</div>
               </div>
               <div class="item-progress">
                 <div class="progress-fill" :style="{ width: item.label3 }"></div>
@@ -39,7 +39,7 @@
             </div>
             <div class="item-body">
               <div class="item-values-row">
-                <div class="item-value">{{ item.label2 }}</div>
+                <div class="item-value">{{ item.label2 }}吨</div>
               </div>
               <div class="item-progress">
                 <div class="progress-fill" :style="{ width: item.label3 }"></div>
@@ -79,14 +79,14 @@ onMounted(async () => {
     const data = result.data || result
 
     const formattedData = data.map((item, index) => {
-      const maxLevel = parseFloat(item['液位上限']) || 1; // Prevent division by zero
-      const currentLevel = parseFloat(item['液位']) || 0;
+      const maxLevel = parseFloat(item['最大罐量']) || 1; // Prevent division by zero
+      const currentLevel = parseFloat(item['当前罐量']) || 0;
       const percentage = Math.min(100, Math.max(0, Math.round((currentLevel / maxLevel) * 100)));
 
       return {
         id: index,
         label1: item['物料名称'] + '-' + item['罐区编码'],
-        label2: item['液位'],
+        label2: item['当前罐量'],
         label3: percentage + '%',
       };
     })

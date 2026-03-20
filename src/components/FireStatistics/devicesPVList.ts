@@ -66,18 +66,6 @@ export const devicePVList = [
         "minValue": 1.14
     },
     {
-        "id": "DI_1213_AI1_PV",
-        "name": "一次精盐水泵出口盐水密度",
-        "maxValue": 1.23,
-        "minValue": 1.14
-    },
-    {
-        "id": "_2LIC_1701_AI1_PV",
-        "name": "脱氯淡盐水液位调节",
-        "maxValue": 750,
-        "minValue": 300
-    },
-    {
         "id": "_2AIA_1501_AI1_PV",
         "name": "二次精盐水泵出口浓度",
         "maxValue": 1.23,

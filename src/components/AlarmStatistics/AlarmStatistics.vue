@@ -13,7 +13,7 @@
     </div>
     <div class="content">
 
-      <el-table :data="tableData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle" empty-text="暂无告警">
+      <el-table :data="displayData" height="231" style="width: 100%" ref="alarmTable" size='small' :row-style="rowstyle" empty-text="暂无告警" row-key="uniqueId">
         <el-table-column prop="device" label="告警设备" />
         <el-table-column prop="time" label="时间" width="50" />
         <el-table-column prop="currentValue" label="实时值" width="70" />
@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, nextTick, computed, onUnmounted } from 'vue'
 import { useStore } from "vuex";
 
 const store = useStore();
@@ -44,7 +44,27 @@ const tableData = computed(() => {
     device: item.name,
     state: item.alarmText,
     currentValue: Number(item.currentValue).toFixed(2),
-    color: item.color
+    color: item.color,
+    id: item.id || Math.random() // Ensure there's an ID for uniqueId
+  }))
+})
+
+const displayData = computed(() => {
+  if (tableData.value.length === 0) return []
+  // Repeat enough times to ensure it's taller than the container (231px)
+  // At least double it for seamless loop, and repeat more if few items
+  let result = [...tableData.value]
+  while (result.length < 15 && result.length !== 0) {
+    result = [...result, ...tableData.value]
+  }
+  // At least double it even if already > 15 to ensure seamless reset at midpoint
+  if (result.length === tableData.value.length) {
+    result = [...result, ...tableData.value]
+  }
+
+  return result.map((item, index) => ({
+    ...item,
+    uniqueId: `${item.id}-${index}`
   }))
 })
 
@@ -61,14 +81,28 @@ onMounted(() => {
     demo.addEventListener('mouseout', () => {
       tableScroll.value = true
     })
-    setInterval(() => {
-      if (tableScroll.value) {
+    const scrollTimer = setInterval(() => {
+      if (!alarmTable.value || !tableScroll.value) return
+      
+      const demo = alarmTable.value.$refs.bodyWrapper?.getElementsByClassName('el-scrollbar__wrap')[0]
+      if (!demo) return
+
+      if (demo.scrollHeight > demo.clientHeight) {
         demo.scrollTop += 1
-        if (demo.clientHeight + demo.scrollTop >= demo.scrollHeight) {
+        // Reset at the midpoint of the repeated data
+        // Since we repeated at least twice, scrollHeight/2 is a safe boundary
+        // but it's better to reset based on original list height.
+        // However, with our 'while' loop, midpoint is safer.
+        if (demo.scrollTop >= demo.scrollHeight / 2) {
           demo.scrollTop = 0
         }
       }
     }, 20)
+
+    onUnmounted(() => {
+      clearInterval(scrollTimer)
+    })
+
   })
 
 })

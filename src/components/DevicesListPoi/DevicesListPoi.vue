@@ -171,6 +171,7 @@ const deviceDetailVisible = ref(false)
 const currentDevice = ref(null)
 
 const showDeviceDetail = async (item) => {
+  clearGrid()
   currentDevice.value = item
   deviceDetailVisible.value = true
   focusModelByName(item)
@@ -277,7 +278,7 @@ const renderGrid = (data) => {
     // 每层颜色从青→蓝渐变
     const t = propertyList.length > 1 ? layerIdx / (propertyList.length - 1) : 0
     const g = Math.round(t * 0x88 + (1 - t) * 0xd4)
-    const faceColor = new Cesium.Color(0, g / 255, 1.0, 0.25)
+    const faceColor = new Cesium.Color(0, g / 255, 1.0, 0.05)
 
     layerProps.forEach((prop) => {
       const idx = prop.serialNumber
@@ -333,7 +334,7 @@ const renderGrid = (data) => {
         }),
         modelMatrix: localMatrix,
         attributes: {
-          color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.CYAN)
+          color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.CYAN.withAlpha(0.05))
         }
       }))
     })
@@ -450,7 +451,7 @@ const setupGridHover = () => {
               if (prevAttr) {
                 const prevMeta = gridMetaMap.get(lastHighlightId)
                 prevAttr.color = Cesium.ColorGeometryInstanceAttribute.toValue(
-                  prevMeta?.origColor || new Cesium.Color(0, 0.83, 1.0, 0.25)
+                  prevMeta?.origColor || new Cesium.Color(0, 0.83, 1.0, 0.1)
                 )
               }
             }
@@ -461,7 +462,7 @@ const setupGridHover = () => {
               if (!meta.origColor) {
                 meta.origColor = (attr.color && attr.color.value)
                   ? Cesium.Color.fromBytes(attr.color.value[0], attr.color.value[1], attr.color.value[2], attr.color.value[3])
-                  : new Cesium.Color(0, 0.83, 1.0, 0.25)
+                  : new Cesium.Color(0, 0.83, 1.0, 0.1)
               }
               attr.color = Cesium.ColorGeometryInstanceAttribute.toValue(
                 new Cesium.Color(1.0, 1.0, 0.0, 0.6) // 黄色高亮
@@ -482,7 +483,7 @@ const setupGridHover = () => {
         if (prevAttr) {
           const prevMeta = gridMetaMap.get(lastHighlightId)
           prevAttr.color = Cesium.ColorGeometryInstanceAttribute.toValue(
-            prevMeta?.origColor || new Cesium.Color(0, 0.83, 1.0, 0.25)
+            prevMeta?.origColor || new Cesium.Color(0, 0.83, 1.0, 0.1)
           )
         }
       }

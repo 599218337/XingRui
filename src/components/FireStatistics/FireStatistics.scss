@@ -137,7 +137,7 @@
 }
 
 .fireStatisticsRight {
-  position: fixed;
+  position: absolute;
   right: -374px;
   width: 400px;
   height: calc(100% - 160px);
@@ -167,6 +167,7 @@
       height: 40px;
       background: url("/image/titlebg.png");
       background-size: 100% 100%;
+
       >span {
         margin-left: 10px;
         height: 40px;
@@ -192,10 +193,12 @@
       &::-webkit-scrollbar {
         width: 4px;
       }
+
       &::-webkit-scrollbar-thumb {
         border-radius: 10px;
         background: rgba(41, 182, 255, 0.5);
       }
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }
@@ -338,14 +341,16 @@
       background: rgba(8, 15, 24, 0.4);
       padding: 10px;
       overflow-y: auto;
-      
+
       &::-webkit-scrollbar {
         width: 4px;
       }
+
       &::-webkit-scrollbar-thumb {
         border-radius: 10px;
         background: rgba(41, 182, 255, 0.5);
       }
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }

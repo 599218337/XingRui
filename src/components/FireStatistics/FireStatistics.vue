@@ -8,7 +8,7 @@
 -->
 <template>
   <!-- 临时调试列表: 移至页面上方正中间 -->
-  <div class="debug-list-container">
+  <!-- <div class="debug-list-container">
     <div class="debug-header">调试列表: 设备位号 ({{ filteredDebugList.length }})</div>
     <el-input v-model="debugSearch" placeholder="搜索 ID 或名称..." size="small" clearable class="debug-search-input" />
     <div class="debug-scroll-area">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <div class="fireStatistics"
     :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
@@ -120,45 +120,49 @@
   </div>
 
   <!-- 右侧全部历史告警面板 -->
-  <div class="fireStatisticsRight"
-    :style="{ transform: `translateX(${showRightContent ? -374 : 0}px)`, transition: 'transform 1s' }">
-    <div id="fireBtnRight" @click="showRightContentFuc"
-      :style="{ background: showRightContent ? 'url(/image/zhankai.png)' : 'url(/image/shouqi.png)', backgroundSize: '100% 100%' }">
+  <Teleport to="#home-container">
+    <div class="fireStatisticsRight"
+      :style="{ transform: `translateX(${showRightContent ? -374 : 0}px)`, transition: 'transform 1s' }">
+      <div id="fireBtnRight" @click="showRightContentFuc"
+        :style="{ background: showRightContent ? 'url(/image/zhankai.png)' : 'url(/image/shouqi.png)', backgroundSize: '100% 100%' }">
+      </div>
+      <div class="widget" style="display: flex; flex-direction: column;">
+        <div class="header" style="flex: none;">
+          <span>历史告警</span>
+        </div>
+        <div class="search-box custom-search"
+          style="padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: none;">
+          <el-date-picker v-model="searchTimeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期"
+            end-placeholder="结束日期" value-format="YYYY-MM-DD HH:mm:ss" size="small" style="width: 100%;"
+            popper-class="custom-popper" :teleported="false" @change="fetchGlobalHistoryAlarms" />
+          <el-select v-model="searchName" placeholder="请选择设备名称" size="small" clearable filterable style="width: 100%;"
+            popper-class="custom-popper" :teleported="false" empty-text="暂无匹配设备" @change="fetchGlobalHistoryAlarms">
+            <el-option v-for="item in devicePVList" :key="item.id" :label="`${item.name} (${item.id})`"
+              :value="item.id">
+              <span style="float: left">{{ item.name }}</span>
+              <span style="float: right; color: rgba(125, 194, 254, 0.6); font-size: 12px; margin-left: 15px;">{{
+                item.id
+                }}</span>
+            </el-option>
+          </el-select>
+        </div>
+        <div class="content" style="padding: 0; flex: 1; min-height: 0;">
+          <el-table class="custom-table" v-loading="globalHistoryLoading" :data="globalHistoryAlarms"
+            style="width: 100%; height: 100%;" empty-text="暂无历史报警" element-loading-background="rgba(19, 44, 69, 0.4)">
+            <el-table-column prop="time" label="报警时间" width="95" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="name" label="设备名称" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="value" label="报警数值" width="85"></el-table-column>
+            <el-table-column prop="type" label="类型" width="60" show-overflow-tooltip>
+              <template #default="scope">
+                <span :style="{ color: scope.row.color }">{{ scope.row.type }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <div class="line"></div>
+      </div>
     </div>
-    <div class="widget" style="display: flex; flex-direction: column;">
-      <div class="header" style="flex: none;">
-        <span>历史告警</span>
-      </div>
-      <div class="search-box custom-search"
-        style="padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: none;">
-        <el-date-picker v-model="searchTimeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" value-format="YYYY-MM-DD HH:mm:ss" size="small" style="width: 100%;"
-          popper-class="custom-popper" :teleported="false" @change="fetchGlobalHistoryAlarms" />
-        <el-select v-model="searchName" placeholder="请选择设备名称" size="small" clearable filterable style="width: 100%;"
-          popper-class="custom-popper" :teleported="false" empty-text="暂无匹配设备" @change="fetchGlobalHistoryAlarms">
-          <el-option v-for="item in devicePVList" :key="item.id" :label="`${item.name} (${item.id})`" :value="item.id">
-            <span style="float: left">{{ item.name }}</span>
-            <span style="float: right; color: rgba(125, 194, 254, 0.6); font-size: 12px; margin-left: 15px;">{{ item.id
-              }}</span>
-          </el-option>
-        </el-select>
-      </div>
-      <div class="content" style="padding: 0; flex: 1; min-height: 0;">
-        <el-table class="custom-table" v-loading="globalHistoryLoading" :data="globalHistoryAlarms"
-          style="width: 100%; height: 100%;" empty-text="暂无历史报警" element-loading-background="rgba(19, 44, 69, 0.4)">
-          <el-table-column prop="time" label="报警时间" width="95" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="name" label="设备名称" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="value" label="报警数值" width="85"></el-table-column>
-          <el-table-column prop="type" label="类型" width="60" show-overflow-tooltip>
-            <template #default="scope">
-              <span :style="{ color: scope.row.color }">{{ scope.row.type }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="line"></div>
-    </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -336,6 +340,59 @@ const queryDeviceData = async (val) => {
     loading.value = false
   }
 }
+
+const updateTilesetStyle = (list) => {
+  const entry = gs3d.global.variable.gs3dAllLayer.find((layerItem) => layerItem.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (!tileset) return
+
+  const conditions = []
+
+  // 1. 根据当前报警列表构建高亮逻辑
+  if (list && list.length > 0) {
+    // 聚合模型名称及其对应的最高优先级颜色 (Red > Orange)
+    const modelColorMap = new Map()
+
+    list.forEach(alarm => {
+      const config = effectList.find(e => e.id === alarm.id)
+      if (config && config.name) {
+        const names = Array.isArray(config.name) ? config.name : [config.name]
+        names.forEach(name => {
+          const currentColor = modelColorMap.get(name)
+          // 优先级：高报 (#ff1200) > 低报 (#FFA940)
+          if (!currentColor || (alarm.color === '#ff1200' && currentColor !== '#ff1200')) {
+            modelColorMap.set(name, alarm.color)
+          }
+        })
+      }
+    })
+
+    // 将聚合后的模型颜色加入 conditions
+    modelColorMap.forEach((color, name) => {
+      conditions.push([`regExp('.*${name}.*').test(\${name})`, `color('${color}', 1.0)`])
+      conditions.push([`regExp('.*${name}.*').test(\${id})`, `color('${color}', 1.0)`])
+    })
+  }
+
+  // 2. 加上默认的基础颜色逻辑
+  conditions.push(["regExp('^jy_').test(${name})", "color('#CC0099')"])
+  conditions.push(["regExp('^lq_').test(${name})", "color('#00CC33')"])
+  conditions.push(["regExp('^qq_').test(${name})", "color('#1933CC')"])
+  conditions.push(["regExp('^ys_').test(${name})", "color('#FFCC00')"])
+  conditions.push(["true", "color('#0099FF')"])
+
+  tileset.style = new gs3d.Cesium.Cesium3DTileStyle({
+    color: {
+      conditions: conditions
+    }
+  })
+}
+
+// 监听 alarmList 变化，自动同步地图高亮
+watch(alarmList, (newList) => {
+  updateTilesetStyle(newList)
+}, { immediate: true, deep: true })
+
 const currentPrimitives = ref([]);
 const showWaterEffect = (id, value) => {
   currentPrimitives.value.forEach(prim => {

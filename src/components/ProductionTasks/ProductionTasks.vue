@@ -12,7 +12,15 @@
       <span>生产负荷监控</span>
     </div>
     <div class="content">
-      <div ref="chartRef" style="width: 100%; height: 214px;"></div>
+      <el-table :data="displayData" style="width: 100%;height: 100%;" ref="alarmTable" size='small' :row-style="rowstyle" row-key="uniqueId">
+        <el-table-column prop="id" label="位号" show-overflow-tooltip align="center" />
+        <el-table-column prop="name" label="名称" show-overflow-tooltip align="center" />
+        <el-table-column label="实时电流/流量" width="120" align="center">
+          <template #default="{ row }">
+            {{ row.complete }} {{ row.unit }}
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
     <div class="line"></div>
 
@@ -20,134 +28,99 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { electricData } from './electricList'
-// import { fetchDeviceData } from '../FireStatistics/start'
-import * as echarts from 'echarts'
+import { fetchDeviceData } from '../FireStatistics/start'
 // import { Vue3SeamlessScroll } from "vue3-seamless-scroll";
-const historyData = ref([])
+
 const tableData = ref(electricData.map((item, index) => ({
   name: item.name,
-  complete: '0.0000',
-  id: item.id
+  complete: '0.0',
+  id: item.id,
+  unit: item.unit || 'A'
 })))
-const chartRef = ref(null)
-let myChart = null
+const alarmTable = ref(null)
 
-const getData = async () => {
-  try {
-    const response = await fetch('/nodeApi/productionLoadHistory')
-    const res = await response.json()
-    if (res.code === 200) {
-      const history = res.data.map(item => ({
-        time: item.time,
-        ...item.data
-      }))
-      historyData.value = history
-      
-      // Update tableData with the latest values
-      if (history.length > 0) {
-        const latest = history[history.length - 1]
-        tableData.value.forEach(item => {
-          if (latest[item.id]) {
-            item.complete = latest[item.id]
-          }
-        })
+const displayData = computed(() => {
+  if (tableData.value.length === 0) return []
+  // Double the data to create a seamless loop
+  return [...tableData.value, ...tableData.value].map((item, index) => ({
+    ...item,
+    uniqueId: `${item.id}-${index}`
+  }))
+})
+
+const getRealtimeData = async () => {
+  const concurrency = 5
+  for (let i = 0; i < tableData.value.length; i += concurrency) {
+    const chunk = tableData.value.slice(i, i + concurrency)
+    await Promise.allSettled(chunk.map(async (item) => {
+      try {
+        const val = await fetchDeviceData(item.id)
+        if (val !== undefined && val !== null) {
+          item.complete = Number(val).toFixed(1)
+        }
+      } catch (error) {
+        console.error(`Failed to fetch realtime data for ${item.id}:`, error)
       }
-      updateChart()
+    }))
+  }
+}
+
+const rowstyle = ({ row, rowIndex }) => {
+  if (rowIndex % 2 == 0) {
+    return {
+      backgroundColor: 'rgba(8, 15, 24, 0.4)',
     }
-  } catch (e) {
-    console.error('Failed to fetch production load history:', e)
   }
-}
-
-const initChart = () => {
-  if (!chartRef.value) return
-  myChart = echarts.init(chartRef.value)
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(8, 24, 50, 0.8)',
-      borderColor: '#0085F5',
-      textStyle: { color: '#fff' },
-      formatter: function (params) {
-        let res = params[0].name + '<br/>'
-        params.forEach(item => {
-          res += item.marker + item.seriesName + ': ' + item.value + ' A<br/>'
-        })
-        return res
-      }
-    },
-    legend: {
-      data: electricData.map(item => item.name),
-      textStyle: { color: '#9ac1e5', fontSize: 10 },
-      top: 0,
-      itemWidth: 10,
-      itemHeight: 10
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      top: '20%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: [],
-      axisLabel: { color: '#9ac1e5', fontSize: 10 },
-      axisLine: { lineStyle: { color: 'rgba(154, 193, 229, 0.2)' } }
-    },
-    yAxis: {
-      type: 'value',
-      name: '电流 (A)',
-      nameTextStyle: { color: '#9ac1e5', fontSize: 10 },
-      axisLabel: { color: '#9ac1e5', fontSize: 10 },
-      splitLine: { lineStyle: { color: 'rgba(154, 193, 229, 0.1)', type: 'dashed' } },
-      axisLine: { show: true, lineStyle: { color: 'rgba(154, 193, 229, 0.2)' } }
-    },
-    series: electricData.map((item, index) => ({
-      name: item.name,
-      type: 'line',
-      smooth: true,
-      showSymbol: false,
-      data: [],
-      lineStyle: { width: 2 },
-      itemStyle: {
-        color: ['#0085F5', '#3ED1EF', '#E9C27A', '#FF7070', '#85FF9F', '#B185FF'][index % 6]
-      }
-    }))
-  }
-  myChart.setOption(option)
-}
-
-const updateChart = () => {
-  if (!myChart) return
-  myChart.setOption({
-    xAxis: {
-      data: historyData.value.map(d => d.time)
-    },
-    series: electricData.map(item => ({
-      data: historyData.value.map(d => d[item.id])
-    }))
-  })
 }
 
 onMounted(() => {
   nextTick(() => {
-    initChart()
-    getData()
+    getRealtimeData()
+
+    // Automatic table scrolling logic
+    if (alarmTable.value) {
+      const demo = alarmTable.value.$refs.bodyWrapper.getElementsByClassName('el-scrollbar__wrap')[0]
+      const tableScroll = ref(true)
+      demo.addEventListener('mouseover', () => {
+        tableScroll.value = false
+      })
+      demo.addEventListener('mouseout', () => {
+        tableScroll.value = true
+      })
+      const scrollTimer = setInterval(() => {
+        if (tableScroll.value) {
+          // If content is shorter than container, no need to scroll
+          // But with doubled data, scrollHeight is 2x. We reset at 1x height.
+          if (demo.scrollHeight > demo.clientHeight * 2) {
+             demo.scrollTop += 1
+             if (demo.scrollTop >= demo.scrollHeight / 2) {
+               demo.scrollTop = 0
+             }
+          } else if (demo.scrollHeight > demo.clientHeight) {
+             // If doubled data is more than container but not necessarily twice container
+             // We can still try to loop if scrollHeight / 2 > some threshold
+             demo.scrollTop += 1
+             if (demo.scrollTop >= demo.scrollHeight / 2) {
+               demo.scrollTop = 0
+             }
+          }
+        }
+      }, 50)
+
+      onUnmounted(() => {
+        clearInterval(scrollTimer)
+      })
+    }
   })
+
   const timer = setInterval(() => {
-    getData()
+    getRealtimeData()
   }, 1000 * 30)
 
   onUnmounted(() => {
     clearInterval(timer)
-    if (myChart) {
-      myChart.dispose()
-    }
   })
 })
 
@@ -156,5 +129,33 @@ onMounted(() => {
 <style lang="scss" scoped>
 @import url('./ProductionTasks.scss');
 
+:deep(.el-table tr) {
+  background-color: #162556;
+  background: rgba(136, 181, 255, 0.2);
+}
 
+.el-table {
+  --el-table-border-color: transparent;
+  --el-table-border: none;
+  --el-table-text-color: #fff;
+  --el-table-header-text-color: #9ac1e5;
+  --el-table-row-hover-bg-color: transparent;
+  --el-table-current-row-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-expanded-cell-bg-color: transparent;
+}
+
+.el-scrollbar__bar .is-horizontal {
+  display: none;
+}
+
+.el-scrollbar__thumb {
+  background-color: transparent;
+}
+
+:deep(.el-scrollbar::after) {
+  height: 0px !important;
+}
 </style>

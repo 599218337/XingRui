@@ -54,7 +54,7 @@
         <div class="info-row"><span class="label">部门：</span><span class="value">{{ currentPerson?.department }}</span>
         </div>
         <div class="info-row"><span class="label">工种：</span><span class="value">{{ currentPerson?.worktypename || '无'
-        }}</span></div>
+            }}</span></div>
         <div class="info-row"><span class="label">电话：</span><span class="value">{{ currentPerson?.tel || '无' }}</span>
         </div>
       </div>
