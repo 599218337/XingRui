@@ -14,14 +14,6 @@ import {
 
 const routes = [
   {
-    path: '/login',
-    name: 'login',
-    component: () => import('@/pages/login/login.vue'),
-    meta: {
-      title: '用户登陆'
-    },
-  },
-  {
     path: '/',
     name: '首页',
     component: () => import('@/pages/home/home.vue'),

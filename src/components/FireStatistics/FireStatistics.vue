@@ -8,7 +8,7 @@
 -->
 <template>
   <!-- 临时调试列表: 移至页面上方正中间 -->
-  <div class="debug-list-container">
+  <!-- <div class="debug-list-container">
     <div class="debug-header">调试列表: 设备位号 ({{ filteredDebugList.length }})</div>
     <el-input v-model="debugSearch" placeholder="搜索 ID 或名称..." size="small" clearable class="debug-search-input" />
     <div class="debug-scroll-area">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <div class="fireStatistics"
     :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
@@ -93,6 +93,10 @@
             <span class="device-detail-popup__label">当前状态</span>
             <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text
             }}</span>
+          </div>
+          <div v-if="currentGridCode" class="device-detail-popup__row">
+            <span class="device-detail-popup__label">北斗码</span>
+            <span class="device-detail-popup__value">{{ currentGridCode }}</span>
           </div>
         </div>
       </div>
@@ -180,6 +184,95 @@ const dialogVisible = ref(false)
 const loading = ref(false)
 const currentDevice = ref({})
 const currentValue = ref('')
+const currentGridCode = ref('')
+const isFlashOn = ref(true);
+let flashTimer = null;
+const gridAlarmPrimitives = ref([]);
+
+const clearGridAlarms = () => {
+  gridAlarmPrimitives.value.forEach(p => {
+    if (p && !p.isDestroyed()) viewer.scene.primitives.remove(p);
+  });
+  gridAlarmPrimitives.value = [];
+};
+
+const renderAlarmGrid = (config, alarm) => {
+  const Cesium = gs3d.Cesium;
+  const { gridPoints, height: gridH } = config;
+  if (!gridPoints?.length) return;
+
+  const finalHeight = gridH || 1.0;
+  const faceInstances = [];
+
+  let baseMatrix;
+  const entry = gs3d.global.variable.gs3dAllLayer.find(l => l.id === 'noWallBuild');
+  const tileset = entry?.layer?.tileSet;
+  if (tileset?.root?.computedTransform) {
+    baseMatrix = Cesium.Matrix4.clone(tileset.root.computedTransform);
+  } else {
+    // Fallback: Use simple ENU
+    const center = Cesium.Cartesian3.fromDegrees(gridPoints[0][1], gridPoints[0][0], 0);
+    baseMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(center);
+  }
+
+  const originEcef = Cesium.Matrix4.getTranslation(baseMatrix, new Cesium.Cartesian3());
+  const originCarto = Cesium.Cartographic.fromCartesian(originEcef);
+  const originLat = Cesium.Math.toDegrees(originCarto.latitude);
+  const originLng = Cesium.Math.toDegrees(originCarto.longitude);
+  const cosOriginLat = Math.cos(originLat * Math.PI / 180);
+  const R = 6378137;
+
+  const alarmColor = Cesium.Color.fromCssColorString(alarm.color);
+  // Grid flashing color toggle
+  const flashColor = isFlashOn.value ? alarmColor.withAlpha(0.6) : alarmColor.withAlpha(0.05);
+
+  gridPoints.forEach((pt, idx) => {
+    const south = pt[0], west = pt[1], north = pt[2], east = pt[3];
+    const centerLon = (west + east) / 2;
+    const centerLat = (south + north) / 2;
+    const nsMeters = (north - south) * Math.PI / 180 * R;
+    const ewMeters = (east - west) * Math.PI / 180 * R * cosOriginLat;
+    const eastOffset = (centerLon - originLng) * Math.PI / 180 * R * cosOriginLat;
+    const northOffset = (centerLat - originLat) * Math.PI / 180 * R;
+    const upOffset = config.altitude !== undefined ? config.altitude : 1.0;
+
+    const localMatrix = Cesium.Matrix4.fromTranslation(new Cesium.Cartesian3(eastOffset, northOffset, upOffset));
+    faceInstances.push(new Cesium.GeometryInstance({
+      id: `alarm_grid_${alarm.id}_${idx}`,
+      geometry: Cesium.BoxGeometry.fromDimensions({
+        dimensions: new Cesium.Cartesian3(ewMeters, nsMeters, finalHeight),
+        vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+      }),
+      modelMatrix: localMatrix,
+      attributes: {
+        color: Cesium.ColorGeometryInstanceAttribute.fromColor(flashColor)
+      }
+    }));
+  });
+
+  if (faceInstances.length) {
+    const p = viewer.scene.primitives.add(new Cesium.Primitive({
+      geometryInstances: faceInstances,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        translucent: true,
+        flat: true
+      }),
+      modelMatrix: baseMatrix,
+      asynchronous: false
+    }));
+    gridAlarmPrimitives.value.push(markRaw(p));
+  }
+};
+
+const updateGridAlarms = (list) => {
+  clearGridAlarms();
+  list.forEach(alarm => {
+    const config = effectList.find(e => e.id === alarm.id);
+    if (config && config.gridPoints) {
+      renderAlarmGrid(config, alarm);
+    }
+  });
+};
 const debugSearch = ref('')
 const filteredDebugList = computed(() => {
   if (!debugSearch.value) return devicePVList
@@ -294,6 +387,29 @@ const alarmList = computed(() => store.state.alarmList)
 onMounted(() => {
   store.dispatch('startPollingAlarms');
   fetchGlobalHistoryAlarms();
+
+  // --- Simulation Start ---
+  // Simulate an alarm for _2TIC_1201_AI1_PV (Grid-based alarm)
+  const mockAlarm = {
+    id: '_2LICA_1604_AI1_PV',
+    name: '纯水槽液位控制',
+    alarmText: '高报网格仿真',
+    color: '#FF4D4F',
+    currentValue: 65,
+    time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    address: '模拟设备'
+  };
+
+  // Add to store's alarm list after a short delay
+  setTimeout(() => {
+    store.commit('setAlarmList', [mockAlarm, ...store.state.alarmList]);
+  }, 1500);
+  // --- Simulation End ---
+
+  flashTimer = setInterval(() => {
+    isFlashOn.value = !isFlashOn.value;
+  }, 500);
+
   setTimeout(() => {
     showContent.value = true
     showRightContent.value = true
@@ -301,6 +417,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (flashTimer) clearInterval(flashTimer);
+  clearGridAlarms();
   const el = document.getElementById('map_tool')
   if (el) {
     el.style.transform = `translateX(0px)`
@@ -329,6 +447,14 @@ const queryDeviceData = async (val) => {
   dialogVisible.value = true
   loading.value = true
   fetchDeviceHistoryAlarms(val.id)
+
+  const config = effectList.find(e => e.id === val.id)
+  if (config && config.gridCodes) {
+    currentGridCode.value = Array.isArray(config.gridCodes) ? config.gridCodes.join(', ') : config.gridCodes
+  } else {
+    currentGridCode.value = ''
+  }
+
   try {
     const value = await fetchDeviceData(val.id)
     currentValue.value = value
@@ -355,13 +481,17 @@ const updateTilesetStyle = (list) => {
 
     list.forEach(alarm => {
       const config = effectList.find(e => e.id === alarm.id)
+      // 如果有网格配置且没有名称配置，则不执行模型高亮/闪烁
+      if (config && config.gridPoints && !config.name) return
+
       if (config && config.name) {
         const names = Array.isArray(config.name) ? config.name : [config.name]
         names.forEach(name => {
           const currentColor = modelColorMap.get(name)
           // 优先级：高报 (#ff1200) > 低报 (#FFA940)
           if (!currentColor || (alarm.color === '#ff1200' && currentColor !== '#ff1200')) {
-            modelColorMap.set(name, alarm.color)
+            const displayColor = isFlashOn.value ? alarm.color : '#FFFFFF'
+            modelColorMap.set(name, displayColor)
           }
         })
       }
@@ -375,22 +505,50 @@ const updateTilesetStyle = (list) => {
   }
 
   // 2. 加上默认的基础颜色逻辑
+  const isSpecialView = store.state.showFire || store.state.showGds
+  const wallColor = isSpecialView ? "color('#FFFFFF')" : "color('#0099FF')"
+
   conditions.push(["regExp('^jy_').test(${name})", "color('#CC0099')"])
   conditions.push(["regExp('^lq_').test(${name})", "color('#00CC33')"])
   conditions.push(["regExp('^qq_').test(${name})", "color('#1933CC')"])
   conditions.push(["regExp('^ys_').test(${name})", "color('#FFCC00')"])
-  conditions.push(["true", "color('#0099FF')"])
+  conditions.push(["true", wallColor])
 
-  tileset.style = new gs3d.Cesium.Cesium3DTileStyle({
+  // --- 关键修改：读取并保留已有的显示（隐藏墙体）逻辑 ---
+  const existingStyle = tileset.style
+  const showConditions = existingStyle?._style?.show?.conditions
+
+  const styleObj = {
     color: {
       conditions: conditions
     }
-  })
+  }
+
+  if (showConditions) {
+    styleObj.show = { conditions: showConditions }
+  }
+
+  tileset.style = new gs3d.Cesium.Cesium3DTileStyle(styleObj)
 }
 
-// 监听 alarmList 变化，自动同步地图高亮
-watch(alarmList, (newList) => {
+// 监听 flash 状态变化，手动触发样式刷新
+watch(isFlashOn, () => {
+  updateTilesetStyle(alarmList.value);
+  updateGridAlarms(alarmList.value);
+});
+
+// 监听 alarmList 变化，自动同步地图高亮并自动 FlyTo 新报警
+watch(alarmList, (newList, oldList) => {
   updateTilesetStyle(newList)
+  updateGridAlarms(newList)
+
+  // 自动 FlyTo 最新加入的报警并打开详情
+  if (newList.length > (oldList?.length || 0)) {
+    const newAlarm = newList[0]; // 默认最新报警在列表首位
+    if (newAlarm) {
+      queryDeviceData(newAlarm);
+    }
+  }
 }, { immediate: true, deep: true })
 
 const currentPrimitives = ref([]);
@@ -507,6 +665,7 @@ const showWaterEffect = (id, value) => {
     });
   }
 }
+
 </script>
 
 <style lang="scss" scoped>
@@ -632,6 +791,7 @@ const showWaterEffect = (id, value) => {
 }
 
 :deep(.custom-search) {
+  background: rgba(8, 15, 24, 0.4);
 
   .el-input__wrapper,
   .el-select__wrapper {

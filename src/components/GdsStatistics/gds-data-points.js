@@ -45,6 +45,7 @@ export const gdsDataPoints = [
     location: '二期脱氯三楼脱氯塔',
     type: '氯气',
     name: 'sb_rq_99',
+    point: [111.41004041256191, 30.554509048816268, 12],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -53,6 +54,7 @@ export const gdsDataPoints = [
     location: '二期脱氯三楼换热器',
     type: '氯气',
     name: 'sb_rq_71',
+    point: [111.40996845212756, 30.55453163517454, 11.4],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -63,7 +65,7 @@ export const gdsDataPoints = [
     name: 'sb_dj_10',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40997618926718, 30.554926072745165],
+    point: [111.40997618926718, 30.554926072745165, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -73,17 +75,17 @@ export const gdsDataPoints = [
     name: 'sb_dj_06',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41003390037244, 30.554891468878168],
+    point: [111.41003390037244, 30.554891468878168, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
-    position_code: 'GT_LJ_006_AI1_PV',
+    position_code: 'GT_006_AI1_PV',
     location: '二期电解二楼3#回路氯气',
     type: '氯气',
     name: 'sb_dj_04',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41007879361771, 30.55486576005899],
+    point: [111.41007879361771, 30.55486576005899, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -93,7 +95,7 @@ export const gdsDataPoints = [
     name: 'sb_dj_02',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41012948451451, 30.55482711700527],
+    point: [111.41012948451451, 30.55482711700527, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -101,6 +103,7 @@ export const gdsDataPoints = [
     location: '二期氯处理一楼氯气洗涤塔',
     type: '氯气',
     name: 'sb_rq_88',
+    point: [111.40959180538742, 30.554057221161106, -0.5],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -109,6 +112,7 @@ export const gdsDataPoints = [
     location: '二期氯处理一楼氯气干燥塔',
     type: '氯气',
     name: 'sb_rq_91',
+    point: [111.40955663045735, 30.554004440254356, -0.5],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -119,7 +123,7 @@ export const gdsDataPoints = [
     name: 'sb_rq_04',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40945361598288, 30.55383469228021],
+    point: [111.40945361598288, 30.55383469228021, -0.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -129,7 +133,7 @@ export const gdsDataPoints = [
     name: 'sb_rq_04',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40942045615277, 30.553823030860322],
+    point: [111.40942045615277, 30.553823030860322, -0.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -137,6 +141,7 @@ export const gdsDataPoints = [
     location: '二期氯处理二楼氯气洗涤塔',
     type: '氯气',
     name: 'sb_rq_88',
+    point: [111.40959180538742, 30.554047221161106, 5.2],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -145,6 +150,7 @@ export const gdsDataPoints = [
     location: '二期氯处理二楼氯气干燥塔',
     type: '氯气',
     name: 'sb_rq_94',
+    point: [111.40955663045735, 30.554004440254356, 5.2],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -153,6 +159,7 @@ export const gdsDataPoints = [
     location: '二期氯处理三楼氯气干燥塔',
     type: '氯气',
     name: 'sb_rq_94',
+    point: [111.40955663045735, 30.554004440254356, 11.2],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -161,6 +168,7 @@ export const gdsDataPoints = [
     location: '二期氯处理三楼氯气洗涤塔',
     type: '氯气',
     name: 'sb_rq_88',
+    point: [111.40959180538742, 30.554047221161106, 11.2],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -168,10 +176,9 @@ export const gdsDataPoints = [
     position_code: 'GT_LJ_028_AI1_PV',
     location: '二期盐酸合成氯气缓冲罐',
     type: '氯气',
-    name: 'jz_dm_02',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40934643217528, 30.554177481264254],
+    point: [111.40934643217528, 30.554177481264254, -0.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -179,6 +186,7 @@ export const gdsDataPoints = [
     location: '二期盐酸合成炉氯气1#',
     type: '氯气',
     name: 'sb_rq_69',
+    point: [111.40915944729606, 30.554007640816238, -0.8],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -189,7 +197,7 @@ export const gdsDataPoints = [
     name: 'sb_rq_69',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40911968470678, 30.553984583866786],
+    point: [111.40911968470678, 30.553984583866786, -0.8],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -197,6 +205,7 @@ export const gdsDataPoints = [
     location: '二期盐酸合成炉氯气3#',
     type: '氯气',
     name: 'sb_rq_70',
+    point: [111.40913122804857, 30.55392723963088, -0.8],
     first_alarm: '1PPM',
     second_alarm: '3PPM'
   },
@@ -207,7 +216,7 @@ export const gdsDataPoints = [
     name: 'sb_rq_69',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40916287218262, 30.55395837878303],
+    point: [111.40916287218262, 30.55395837878303, -0.8],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -215,6 +224,7 @@ export const gdsDataPoints = [
     location: '二期A盐酸合成炉上方H2',
     type: '氢气',
     name: 'sb_rq_70',
+    point: [111.40910651644538, 30.553945085739187, 2.3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -224,7 +234,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.4100925867155, 30.554846441185894],
+    point: [111.4100925867155, 30.554846441185894, 13],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -233,7 +243,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.410197732872, 30.554760727988995],
+    point: [111.410197732872, 30.554760727988995, 13],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -241,6 +251,7 @@ export const gdsDataPoints = [
     location: '二期氢气处理分配台旁',
     type: '氢气',
     name: 'sb_qt_07',
+    point: [111.40955024138361, 30.554439597256394, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -249,6 +260,7 @@ export const gdsDataPoints = [
     location: '二期氢处理冷凝水槽',
     type: '氢气',
     name: 'sb_rq_79',
+    point: [111.40956228138167, 30.554420501241236, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -257,6 +269,7 @@ export const gdsDataPoints = [
     location: '二期氢处理A压缩机',
     type: '氢气',
     name: 'sb_beng_15',
+    point: [111.40952032581654, 30.554354845216412, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -265,6 +278,7 @@ export const gdsDataPoints = [
     location: '二期氢处理B压缩机',
     type: '氢气',
     name: 'sb_beng_104',
+    point: [111.40957851800243, 30.55431409842826, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -273,6 +287,7 @@ export const gdsDataPoints = [
     location: '二期氢处理C压缩机',
     type: '氢气',
     name: 'sb_beng_105',
+    point: [111.40954140937055, 30.554272587273207, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -281,6 +296,7 @@ export const gdsDataPoints = [
     location: '二期氢处理D压缩机',
     type: '氢气',
     name: 'sb_beng_103',
+    point: [111.40948230615032, 30.5543114423476, 3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -289,6 +305,7 @@ export const gdsDataPoints = [
     location: '二期B盐酸合成炉上方氢气H2',
     type: '氢气',
     name: 'sb_rq_69',
+    point: [111.40918592880335, 30.55399120069772, 2.3],
     first_alarm: '25%LEL',
     second_alarm: '50%LEL'
   },
@@ -299,7 +316,7 @@ export const gdsDataPoints = [
     name: '电解槽09',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41013554762432, 30.55472274956592, 20],
+    point: [111.41013554762432, 30.55472274956592, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -308,7 +325,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.41000818227388, 30.554902934220106, 20],
+    point: [111.41000818227388, 30.554902934220106, 13],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -318,7 +335,7 @@ export const gdsDataPoints = [
     name: '电解槽E201',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41017050556005, 30.5546955187447, 20],
+    point: [111.41017050556005, 30.5546955187447, 6.9],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -328,7 +345,7 @@ export const gdsDataPoints = [
     name: 'sb_qt_44',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40944839285936, 30.553890448629847, 20],
+    point: [111.40944839285936, 30.553890448629847, 3.6],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -337,7 +354,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.4095177453904, 30.553801388552483, 20],
+    point: [111.4095177453904, 30.553801388552483, 3.6],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -346,7 +363,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40945361153425, 30.553741079589155, 10],
+    point: [111.40945361153425, 30.553741079589155, -0.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -355,7 +372,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.41004948442824, 30.55487799291732, 20],
+    point: [111.41004948442824, 30.55487799291732, 17],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -364,7 +381,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.41017055847735, 30.554786535657417, 20],
+    point: [111.41017055847735, 30.554786535657417, 17],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -373,7 +390,7 @@ export const gdsDataPoints = [
     type: '氢气',
     first_alarm: '25%LEL',
     second_alarm: '50%LEL',
-    point: [111.4103401328476, 30.554835680161585, 20],
+    point: [111.4103401328476, 30.554835680161585, 10],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -382,7 +399,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41035205034841, 30.554846979358473, 30],
+    point: [111.41035205034841, 30.554846979358473, 14],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -391,15 +408,8 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41035647754407, 30.554871427138615, 20],
+    point: [111.41035647754407, 30.554871427138615, 6.8],
     flyto: [-4.6, -26.3, 15]
-  },
-  {
-    position_code: 'GT_001_AI1_PV',
-    location: '新氯压机房一楼一级冷却器旁',
-    type: '氯气',
-    first_alarm: '1PPM',
-    second_alarm: '3PPM'
   },
   {
     position_code: 'GT_002_AI1_PV',
@@ -407,7 +417,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40940531009184, 30.553780465731094, 20],
+    point: [111.40940531009184, 30.553780465731094, 3.6],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -416,7 +426,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40939684939922, 30.553749569417647, 10],
+    point: [111.40939684939922, 30.553749569417647, -0.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -425,7 +435,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40934904421897, 30.553785069017323, 20],
+    point: [111.40934904421897, 30.553785069017323, 3.6],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -434,7 +444,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.40960876076291, 30.553990243651405, 40],
+    point: [111.40960876076291, 30.553990243651405, 17.6],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -443,7 +453,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.41036517635295, 30.55488542856367, 40],
+    point: [111.41036517635295, 30.55488542856367, 19.5],
     flyto: [-4.6, -26.3, 15]
   },
   {
@@ -452,7 +462,7 @@ export const gdsDataPoints = [
     type: '氯气',
     first_alarm: '1PPM',
     second_alarm: '3PPM',
-    point: [111.4100452928743, 30.554568610677254, 20],
+    point: [111.4100452928743, 30.554568610677254, 5.4],
     flyto: [-4.6, -26.3, 15]
   }
 ];

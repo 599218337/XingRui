@@ -104,6 +104,13 @@ watch(() => store.state.showAside, (val) => {
   document.getElementById('map_tool').style.transition = `transform ${t}s`
 })
 
+// 监听消防/气体统计面板的打开，修改模型默认颜色
+watch([() => store.state.showFire, () => store.state.showGds], () => {
+  if (activeEffect.value === 'xray') {
+    applyPerFeatureColors()
+  }
+})
+
 onMounted(async () => {
   getScale()
   window.addEventListener('resize', getScale);
@@ -113,7 +120,7 @@ onMounted(async () => {
 
   const defopt = {
     msaaSamples: 4,
-    infoBox: true,
+    // infoBox: true,
     timeline: true,
     // useImageryLayers: false,
     // terrain: Cesium.Terrain.fromWorldTerrain(),
@@ -163,74 +170,6 @@ onMounted(async () => {
   applyPerFeatureColors()
   activeEffect.value = 'xray'
   isTransitioning.value = false
-
-
-  // 建立滑鼠事件處理器
-  const handler = new Cesium.ScreenSpaceEventHandler(viewer.value.scene.canvas);
-
-  // 儲存上一個被選中的部件，以便還原顏色
-  let highlightedFeature = undefined;
-  let originalColor = new Cesium.Color();
-
-  // 監聽滑鼠左鍵點擊事件
-  handler.setInputAction(function (movement) {
-    // 取得滑鼠點擊位置的物件
-    const picked = viewer.value.scene.pick(movement.position);
-
-    if (!Cesium.defined(picked)) return;
-
-    // 嘗試獲取 Cesium3DTileFeature（兼容 3D Tiles 1.0 和 1.1）
-    let pickedFeature = picked;
-    // 1.1 格式下 picked 可能是 { primitive, content, ... } 而非直接的 Feature
-    if (picked instanceof Cesium.Cesium3DTileFeature) {
-      pickedFeature = picked;
-    } else if (picked.content && picked.content instanceof Cesium.Cesium3DTileFeature) {
-      pickedFeature = picked.content;
-    }
-
-    // 如果點擊到了 3D Tiles 的某個具體部件 (Feature)
-    if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
-
-      // --- 1. 讀取該部位的屬性 ---
-      if (typeof pickedFeature.getPropertyIds === 'function') {
-        // Cesium 1.104+ 使用 getPropertyIds 替代 getPropertyNames
-        const propertyIds = pickedFeature.getPropertyIds();
-        console.log("該部件擁有的屬性:", propertyIds);
-      } else if (typeof pickedFeature.getPropertyNames === 'function') {
-        // 舊版 Cesium 使用 getPropertyNames
-        const propertyNames = pickedFeature.getPropertyNames();
-        console.log("該部件擁有的屬性:", propertyNames);
-      } else {
-        console.log("該部件無可讀取的屬性方法");
-      }
-
-      // 讀取特定屬性 (例如 name 或 id)
-      if (typeof pickedFeature.getProperty === 'function') {
-        const partName = pickedFeature.getProperty('name');
-        console.log("你點擊了:", partName);
-      }
-
-      // --- 2. 改變該部位的顏色 (高亮) ---
-      // 還原之前點擊的部件顏色
-      if (Cesium.defined(highlightedFeature)) {
-        highlightedFeature.color = originalColor;
-      }
-
-      // 紀錄當前部件和它的原始顏色
-      highlightedFeature = pickedFeature;
-      Cesium.Color.clone(pickedFeature.color, originalColor);
-
-      // 將點擊的部件變成黃色
-      pickedFeature.color = Cesium.Color.YELLOW;
-
-      // --- 3. 隱藏該部位 ---
-      // 如果你想點擊後直接隱藏它，可以這樣做：
-      // pickedFeature.show = false; 
-    } else {
-      console.log("點擊到的不是 3D Tiles Feature:", picked);
-    }
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
 })
 
 onUnmounted(() => {
@@ -268,6 +207,10 @@ const applyPerFeatureColors = () => {
   const entry = gs3d.global.variable.gs3dAllLayer.find((item: any) => item.id === 'noWallBuild')
   const tileset = entry?.layer?.tileSet
   if (tileset) {
+    // 当消防或气体统计打开时，将模型的默认颜色改为白色
+    const isSpecialView = store.state.showFire || store.state.showGds
+    const wallColor = isSpecialView ? "color('#FFFFFF')" : "color('#0099FF')"
+
     tileset.style = new Cesium.Cesium3DTileStyle({
       color: {
         conditions: [
@@ -275,7 +218,7 @@ const applyPerFeatureColors = () => {
           ["regExp('^lq_').test(${name})", "color('#00CC33')"],   // 绿色   - 冷却管
           ["regExp('^qq_').test(${name})", "color('#1933CC')"],   // 深蓝色 - 蒸汽管
           ["regExp('^ys_').test(${name})", "color('#FFCC00')"],   // 黄色   - 雨水管
-          ["true", "color('#0099FF')"]                            // 默认青白色 - 建筑/墙体
+          ["true", wallColor]                                     // 默认颜色 - 建筑/墙体
         ]
       }
     })
@@ -407,7 +350,7 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref" id="home-container">
 
-    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
+    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
@@ -433,33 +376,21 @@ const pickPoint = () => {
         <energyStatistics></energyStatistics>
       </div>
     </Transition>
-    <!-- 视频监控 -->
-    <Transition name="slide-fade3">
-      <div class="left_wrapper_camera" v-if="store.state.showCamera">
+    <!-- 侧边栏专题统计 (根据状态显示对应面板) -->
+    <Transition name="slide-fade3" mode="out-in">
+      <div class="left_wrapper_camera" v-if="store.state.showCamera" key="camera">
         <cameraStatistics :viewer="viewer"></cameraStatistics>
       </div>
-    </Transition>
-    <!-- 设备信息 -->
-    <Transition name="slide-fade3">
-      <div class="left_wrapper_camera" v-if="store.state.showDevices">
+      <div class="left_wrapper_camera" v-else-if="store.state.showDevices" key="devices">
         <devicesListPoi :viewer="viewer"></devicesListPoi>
       </div>
-    </Transition>
-    <!-- 消防位置 -->
-    <Transition name="slide-fade3">
-      <div class="left_wrapper_camera" v-if="store.state.showFire">
+      <div class="left_wrapper_camera" v-else-if="store.state.showFire" key="fire">
         <fireStatistics :viewer="viewer"></fireStatistics>
       </div>
-    </Transition>
-    <!-- 气体报警 -->
-    <Transition name="slide-fade3">
-      <div class="left_wrapper_camera" v-if="store.state.showGds">
+      <div class="left_wrapper_camera" v-else-if="store.state.showGds" key="gds">
         <gdsStatistics :viewer="viewer"></gdsStatistics>
       </div>
-    </Transition>
-    <!-- 人员巡视 -->
-    <Transition name="slide-fade3">
-      <div class="left_wrapper_camera" v-if="store.state.showPerson">
+      <div class="left_wrapper_camera" v-else-if="store.state.showPerson" key="person">
         <personStatistics :viewer="viewer"></personStatistics>
       </div>
     </Transition>

@@ -57,6 +57,9 @@
             }}</span></div>
         <div class="info-row"><span class="label">电话：</span><span class="value">{{ currentPerson?.tel || '无' }}</span>
         </div>
+        <div class="info-row"><span class="label">北斗码：</span><span class="value">{{ beidouGridCodeLoading ? '加载中...' :
+            beidouGridCode }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -151,6 +154,8 @@ const activeName = ref();
 const departTypeList = ref([])
 const personPopupVisible = ref(false)
 const currentPerson = ref(null)
+const beidouGridCode = ref('无')
+const beidouGridCodeLoading = ref(false)
 const popupPosition = ref({ x: 0, y: 0 })
 const popupRef = ref(null)
 
@@ -209,8 +214,32 @@ const startDrag = (e) => {
 let postRender = null
 let screenEventHandler = null
 
+const getBeidouGridCode = async (lng, lat) => {
+  beidouGridCodeLoading.value = true;
+  try {
+    const response = await fetch(`/zwyl/grid/person?lng=${lng}&lat=${lat}&level=27`);
+    const json = await response.json();
+    // 根据接口文档，gridCode 是顶层字段
+    if (json.gridCode) {
+      beidouGridCode.value = json.gridCode;
+    } else {
+      beidouGridCode.value = '无';
+    }
+  } catch (error) {
+    console.error('Failed to fetch Beidou Grid Code:', error);
+    beidouGridCode.value = '无';
+  } finally {
+    beidouGridCodeLoading.value = false;
+  }
+};
+
 const openPersonPopup = async (source, personData) => {
   currentPerson.value = personData
+  if (personData.longitude && personData.latitude) {
+    getBeidouGridCode(personData.longitude, personData.latitude)
+  } else {
+    beidouGridCode.value = '无'
+  }
   if (source) {
     if (postRender) {
       postRender()
@@ -243,6 +272,7 @@ const openPersonPopup = async (source, personData) => {
 const closePersonPopup = () => {
   personPopupVisible.value = false
   currentPerson.value = null
+  beidouGridCode.value = '无'
 }
 
 onMounted(async () => {

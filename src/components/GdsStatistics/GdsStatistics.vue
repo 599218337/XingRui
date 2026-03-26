@@ -249,8 +249,8 @@ class HtmlOverlay {
 }
 
 // 波纹参数
-const RIPPLE_RADIUS = 3.0;     // 波纹圆的半径(米)
-const MAX_VISIBLE_DISTANCE = 40.0; // 弹窗显示的最大距离阈值(米)
+const RIPPLE_RADIUS = 2.8;     // 波纹圆的半径(米)
+const MAX_VISIBLE_DISTANCE = 30.0; // 弹窗显示的最大距离阈值(米)
 
 function createOrUpdateDynamicRippleSphere(id, position, colorStr) {
   if (!viewer) return;
@@ -379,12 +379,6 @@ const fetchStatuses = async () => {
       let val = await fetchDeviceData(item.position_code)
       let color = getStatusColor(item, val)
 
-      // 模拟异常效果: 强制 GT_LJ_001_AI1_PV 为异常状态
-      if (item.position_code === 'GT_LJ_001_AI1_PV') {
-        val = 100;
-        color = '#FF4D4F'; // 红色
-      }
-
       deviceStatus.value[item.position_code] = {
         value: val,
         color: color
@@ -481,7 +475,7 @@ const focusModelByName = (item) => {
         ["regExp('^lq_').test(${name})", "color('#00CC33')"],
         ["regExp('^qq_').test(${name})", "color('#1933CC')"],
         ["regExp('^ys_').test(${name})", "color('#FFCC00')"],
-        ["true", "color('#0099FF')"]
+        ["true", store.state.showFire || store.state.showGds ? "color('#FFFFFF')" : "color('#0099FF')"]
       ]
     }
   });
