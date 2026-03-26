@@ -58,8 +58,8 @@ export default defineConfig({
         rewrite: path => path.replace(/^\/zwyl/, '')
       },
       "/nodeApi": {
-        // target: 'http://192.168.130.106:3000/',
-        target: 'http://localhost:3000/',
+        target: 'http://192.168.130.106:3000/',
+        // target: 'http://localhost:3000/',
         changeOrigin: true
       }
 

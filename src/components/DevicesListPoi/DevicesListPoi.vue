@@ -110,33 +110,13 @@
     <div class="grid-tooltip__row"><span class="grid-tooltip__key">经度范围</span><span class="grid-tooltip__val">{{
       gridTooltip.lngRange }}</span></div>
   </div>
-  <div class="editMessage">
-    <div class="edit1" v-show="showEdit1">
-      <span>请用鼠标左键放置设备点位</span>
-      <div class="cancle" @click="cancel1"></div>
-      <div class="confirm" @click="confirm1"></div>
-    </div>
-    <div class="edit2" v-show="showEdit2">
-      <span>请进行微调</span>
-      <!-- <div class="tran" @click="transform(1)">
-        <div class="icon"></div>
-        <div class="text">平移</div>
-      </div>
-      <div class="roate" @click="transform(2)">
-        <div class="icon"></div>
-        <div class="text">旋转</div>
-      </div> -->
-      <div class="cancle" @click="cancel2"></div>
-      <div class="confirm" @click="confirm2"></div>
-    </div>
 
-  </div>
 
 </template>
 
 <script setup>
 import { ElMessage } from 'element-plus';
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from "vuex";
 import axios from 'axios';
 const store = useStore();
@@ -230,11 +210,6 @@ const renderGrid = (data) => {
   const entry = gs3d.global.variable.gs3dAllLayer.find(l => l.id === 'noWallBuild')
   const tileset = entry?.layer?.tileSet
 
-  console.log('[renderGrid] tileset found:', !!tileset)
-  console.log('[renderGrid] tileset.root:', tileset?.root)
-  console.log('[renderGrid] tileset.root.transform:', tileset?.root?.transform)
-  console.log('[renderGrid] tileset.root.computedTransform:', tileset?.root?.computedTransform)
-
   if (tileset?.root?.computedTransform) {
     // computedTransform = modelMatrix * root.transform，包含了所有变换
     baseMatrix = Cesium.Matrix4.clone(tileset.root.computedTransform)
@@ -243,7 +218,6 @@ const renderGrid = (data) => {
     const originCarto = Cesium.Cartographic.fromCartesian(originEcef)
     originLat = Cesium.Math.toDegrees(originCarto.latitude)
     originLng = Cesium.Math.toDegrees(originCarto.longitude)
-    console.log('[renderGrid] 使用 tileset 坐标系, 原点:', originLat, originLng)
   } else if (tileset?.root?.transform) {
     baseMatrix = Cesium.Matrix4.clone(tileset.root.transform)
     if (tileset.modelMatrix && !Cesium.Matrix4.equals(tileset.modelMatrix, Cesium.Matrix4.IDENTITY)) {
@@ -253,7 +227,6 @@ const renderGrid = (data) => {
     const originCarto = Cesium.Cartographic.fromCartesian(originEcef)
     originLat = Cesium.Math.toDegrees(originCarto.latitude)
     originLng = Cesium.Math.toDegrees(originCarto.longitude)
-    console.log('[renderGrid] 使用 root.transform, 原点:', originLat, originLng)
   } else {
     // 无模型时回退：以网格质心建立 ENU
     const allLats = gridPoints.map(pt => (pt[0] + pt[2]) / 2)
@@ -262,7 +235,6 @@ const renderGrid = (data) => {
     originLng = allLngs.reduce((a, b) => a + b) / allLngs.length
     const originCartesian = Cesium.Cartesian3.fromDegrees(originLng, originLat, 0)
     baseMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(originCartesian)
-    console.log('[renderGrid] 回退到 ENU, 原点:', originLat, originLng)
   }
 
   const cosOriginLat = Math.cos(originLat * Math.PI / 180)
@@ -284,7 +256,7 @@ const renderGrid = (data) => {
       const idx = prop.serialNumber
       if (idx >= gridPoints.length) return
 
-      const hBot = layerIdx * finalHeight
+      const hBot = layerIdx * finalHeight + 1.5
       const hTop = hBot + finalHeight
       const centerH = (hBot + hTop) / 2
       const boxH = hTop - hBot
@@ -560,11 +532,12 @@ const confirm1 = () => {
   emitter.emit('addCameraEffect', cameraEditData);
 
 }
-emitter.on('nextStep', () => {
+const onNextStep = () => {
   showEdit1.value = false
   showEdit2.value = true
   emitter.emit('transform', cameraEditData);
-});
+}
+emitter.on('nextStep', onNextStep);
 
 const cancel1 = () => {
   emitter.emit('cancelGetCoord');
@@ -581,7 +554,7 @@ const cancel2 = () => {
 
 
 
-emitter.on('completeCamera', (val) => {
+const onCompleteCamera = (val) => {
   showEdit2.value = false
   let cameraArray = store.state.cameraArray
   cameraArray.forEach((item) => {
@@ -593,12 +566,30 @@ emitter.on('completeCamera', (val) => {
     }
   });
   store.dispatch("setCameraArray", cameraArray);
-});
+}
+emitter.on('completeCamera', onCompleteCamera);
 
 // const transform = (type) => {
 //   emitter.emit('transform', type);
 // }
 
+
+onUnmounted(() => {
+  clearGrid()
+  if (gridHoverHandler) {
+    gridHoverHandler.destroy()
+    gridHoverHandler = null
+  }
+  emitter.off('nextStep', onNextStep)
+  emitter.off('completeCamera', onCompleteCamera)
+
+  // 恢复模型原始颜色逻辑 (如果需要完全清除样式)
+  const entry = gs3d.global.variable.gs3dAllLayer.find((layerItem) => layerItem.id === 'noWallBuild')
+  const tileset = entry?.layer?.tileSet
+  if (tileset) {
+    tileset.style = undefined
+  }
+})
 
 </script>
 

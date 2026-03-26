@@ -283,6 +283,6 @@ export const deviceList: Device[] = [
   { id: 267, tagNumber: '2P9706B', description: '再生泵', categoryName: '通用设备', abcLabel: 'C一般设备', commissionDate: '2012-09-28', responsible: '詹权钱', tagName: '' },
   { id: 268, tagNumber: '2P1203A', description: '九思膜过滤循环泵A', categoryName: '通用设备', abcLabel: 'C一般设备', commissionDate: '2012-09-28', responsible: '詹权钱', tagName: '九思膜过滤循环泵2P1203A' },
   { id: 269, tagNumber: '2P1203B', description: '九思膜过滤循环泵B', categoryName: '通用设备', abcLabel: 'C一般设备', commissionDate: '2012-09-28', responsible: '詹权钱', tagName: '九思膜过滤循环泵2P1203B' },
-  { id: 270, tagNumber: '2P1203C', description: '九思膜过滤循环泵C', categoryName: '通用设备', abcLabel: 'C一般设备', commissionDate: '2012-09-28', responsible: '詹权钱', tagName: '九思膜过滤循环泵2P1203C' }
-
+  { id: 270, tagNumber: '2P1203C', description: '九思膜过滤循环泵C', categoryName: '通用设备', abcLabel: 'C一般设备', commissionDate: '2012-09-28', responsible: '詹权钱', tagName: '九思膜过滤循环泵2P1203C' },
+  { id: 271, tagNumber: '2E1601', description: '换热器', categoryName: '通用设备', abcLabel: 'A关键设备', commissionDate: '2012-12-29', responsible: '詹权钱', tagName: 'sb_rq_71' },
 ]

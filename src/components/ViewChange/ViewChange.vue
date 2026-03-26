@@ -10,8 +10,11 @@
   <div class="viewChange" @click="viewShow">
     <div class="text">图层显隐</div>
   </div>
-  <div class="viewContent1" v-show="showView">
+  <div class="viewContent0" v-show="showView">
     <div class="view1" @click="viewChange(1)"></div>
+    <div class="view6" @click="viewChange(6)"></div>
+  </div>
+  <div class="viewContent1" v-show="showView">
     <div class="view2" @click="viewChange(2)"></div>
   </div>
   <div class="viewContent2" v-show="showView">
@@ -22,6 +25,7 @@
     <div class="view5" @click="viewChange(5)"></div>
   </div>
 
+
 </template>
 
 <script setup>
@@ -29,6 +33,11 @@ import { ref, reactive, watch, nextTick, onMounted } from 'vue'
 
 import { ElMessage } from 'element-plus'
 import * as gs3d from '/public/gs3d/index';
+import axios from 'axios';
+import protobuf from 'protobufjs';
+
+const props = defineProps(['viewer']);
+
 const { Cesium } = gs3d
 const showView = ref(false)
 
@@ -72,6 +81,74 @@ const viewShow = () => {
   showView.value = !showView.value
 }
 
+const toggleGrid = async () => {
+  if (!props.viewer) return;
+  if (gridDataLoaded) {
+    isGridVisible = !isGridVisible;
+    gridPrimitives.forEach(p => { p.show = isGridVisible });
+    return;
+  }
+  try {
+    const root = await protobuf.load('/grid/grid.proto');
+    const Grid3dBaseDTO = root.lookupType("com.zwyl.governance.entity.Grid3dBaseDTO");
+    const response = await axios.get('/Knife4j.txt', { responseType: 'arraybuffer' });
+    const buffer = new Uint8Array(response.data);
+    const decodedData = Grid3dBaseDTO.decode(buffer);
+    renderGrid(props.viewer, decodedData);
+    gridDataLoaded = true;
+    isGridVisible = true;
+  } catch (err) {
+    console.error('加载网格出错', err);
+    ElMessage.error('加载网格出错');
+  }
+}
+
+function renderGrid(viewer, decodedData) {
+  const { gridPoints, height: gridStepHeight, propertylist } = decodedData;
+  const instances = [];
+
+  propertylist.forEach((floorData, floorIndex) => {
+    floorData.properties.forEach((prop) => {
+      const points = gridPoints[prop.serialNumber].points;
+      const rectangle = Cesium.Rectangle.fromDegrees(points[1], points[0], points[3], points[2]);
+      const baseHeight = prop.height - 60;
+      const topHeight = baseHeight + gridStepHeight;
+      const instance = new Cesium.GeometryInstance({
+        geometry: new Cesium.RectangleGeometry({
+          rectangle: rectangle,
+          height: baseHeight,
+          extrudedHeight: topHeight,
+          vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+        }),
+        attributes: {
+          color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+            Cesium.Color.fromCssColorString('rgba(0, 255, 255, 0.03)')
+          )
+        }
+      });
+      instances.push(instance);
+    });
+  });
+
+  if (instances.length > 0) {
+    const primitive = new Cesium.Primitive({
+      geometryInstances: instances,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        flat: true,
+        translucent: true
+      }),
+      asynchronous: true,
+      allowPicking: false // 禁用交互拾取以进一步优化性能
+    });
+    viewer.scene.primitives.add(primitive);
+    gridPrimitives.push(primitive);
+  }
+}
+
+const gridPrimitives = [];
+let gridDataLoaded = false;
+let isGridVisible = false;
+
 const viewChange = (type) => {
   switch (type) {
     case 1:
@@ -89,6 +166,9 @@ const viewChange = (type) => {
     case 5:
       visibility.building = !visibility.building
       break;
+    case 6:
+      toggleGrid()
+      return;
     default:
       break;
   }

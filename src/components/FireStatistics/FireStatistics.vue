@@ -8,7 +8,7 @@
 -->
 <template>
   <!-- 临时调试列表: 移至页面上方正中间 -->
-  <!-- <div class="debug-list-container">
+  <div class="debug-list-container">
     <div class="debug-header">调试列表: 设备位号 ({{ filteredDebugList.length }})</div>
     <el-input v-model="debugSearch" placeholder="搜索 ID 或名称..." size="small" clearable class="debug-search-input" />
     <div class="debug-scroll-area">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-  </div> -->
+  </div>
 
   <div class="fireStatistics"
     :style="{ transform: `translateX(${showContent ? 374 : 0}px)`, transition: 'transform 1s' }">
@@ -92,7 +92,7 @@
           <div class="device-detail-popup__row">
             <span class="device-detail-popup__label">当前状态</span>
             <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text
-              }}</span>
+            }}</span>
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@
               <span style="float: left">{{ item.name }}</span>
               <span style="float: right; color: rgba(125, 194, 254, 0.6); font-size: 12px; margin-left: 15px;">{{
                 item.id
-                }}</span>
+              }}</span>
             </el-option>
           </el-select>
         </div>

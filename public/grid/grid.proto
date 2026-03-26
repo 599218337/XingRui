@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package com.zwyl.governance.entity;
+
+// 定义 Grid3dPropertyDTO 消息
+message Grid3dPropertyDTO {
+  // 这里需要根据 Grid3dPropertyDTO 类的实际字段来补充
+  // 假设 Grid3dPropertyDTO 有一个名为 serialNumber 的 int32 类型字段
+  int32 serialNumber = 1;
+  // 假设 Grid3dPropertyDTO 有一个名为 height 的 double 类型字段
+  double height = 2;
+  // 假设 Grid3dPropertyDTO 有一个名为 hasModel 的 bool 类型字段
+  bool hasModel = 3;
+  // 假设 Grid3dPropertyDTO 有一个名为 airspaceType 的 int32 类型字段
+  int32 airspaceType = 4;
+}
+
+// 定义 Grid3dBaseDTO 消息
+message Grid3dBaseDTO {
+  // 角点坐标，这里使用 repeated 嵌套消息来表示 List<List<Double>>
+  repeated GridPointList gridPoints = 1;
+  // 网格高度：每个网格的高度
+  double height = 2;
+  // 网格级别
+  int32 level = 3;
+  // 网格层级列表，使用 repeated 嵌套消息来表示 List<List<Grid3dPropertyDTO>>
+  repeated Grid3dPropertyList propertylist = 4;
+}
+
+// 用于表示 List<Double> 的消息
+message GridPointList {
+  repeated double points = 1;
+}
+
+// 用于表示 List<Grid3dPropertyDTO> 的消息
+message Grid3dPropertyList {
+  repeated Grid3dPropertyDTO properties = 1;
+}

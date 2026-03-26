@@ -85,11 +85,26 @@ export default {
     while (state.isPollingAlarms) {
       if (!state.isPollingAlarms) break;
       try {
-        const response = await fetch('/nodeApi/triggerAlarms');
+        const now = new Date();
+        const oneMinuteAgo = new Date(now.getTime() - 60000);
+        const format = (date) => {
+          const Y = date.getFullYear();
+          const M = String(date.getMonth() + 1).padStart(2, '0');
+          const D = String(date.getDate()).padStart(2, '0');
+          const h = String(date.getHours()).padStart(2, '0');
+          const m = String(date.getMinutes()).padStart(2, '0');
+          const s = String(date.getSeconds()).padStart(2, '0');
+          return `${Y}-${M}-${D} ${h}:${m}:${s}`;
+        };
+        const queryParams = new URLSearchParams();
+        queryParams.append('startTime', format(oneMinuteAgo));
+        queryParams.append('endTime', format(now));
+
+        const response = await fetch(`/nodeApi/alarmsHistory?${queryParams.toString()}`);
         if (response.ok) {
           const result = await response.json();
-          if (result.code === 200 && result.data && result.data.newAlarms) {
-            const alarms = result.data.newAlarms.map(item => {
+          if (result.code === 200 && result.data) {
+            const alarms = result.data.map(item => {
               const now = new Date();
               const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
@@ -126,7 +141,7 @@ export default {
         console.error('Failed to fetch alarms', e);
       }
       // slight delay before starting the next poll round
-      await new Promise(r => setTimeout(r, 20000));
+      await new Promise(r => setTimeout(r, 60000));
     }
   },
   stopPollingAlarms({ commit }) {

@@ -38,37 +38,34 @@ import { useStore } from "vuex";
 const store = useStore();
 
 const tableData = computed(() => {
-  return store.state.alarmList.map(item => ({
+  return store.state.alarmList.map((item, index) => ({
     address: item.address || '系统设备',
     time: item.time,
     device: item.name,
     state: item.alarmText,
     currentValue: Number(item.currentValue).toFixed(2),
     color: item.color,
-    id: item.id || Math.random() // Ensure there's an ID for uniqueId
+    id: item.id || `alarm-${index}` // Use stable fallback ID
   }))
 })
 
 const displayData = computed(() => {
-  if (tableData.value.length === 0) return []
-  // Repeat enough times to ensure it's taller than the container (231px)
-  // At least double it for seamless loop, and repeat more if few items
-  let result = [...tableData.value]
-  while (result.length < 15 && result.length !== 0) {
-    result = [...result, ...tableData.value]
-  }
-  // At least double it even if already > 15 to ensure seamless reset at midpoint
-  if (result.length === tableData.value.length) {
-    result = [...result, ...tableData.value]
-  }
-
-  return result.map((item, index) => ({
+  const data = tableData.value
+  if (data.length === 0) return []
+  
+  // Only double the data for seamless loop if we have enough items
+  // to actually fill the table (height: 231px).
+  const shouldDouble = data.length > 5
+  const finalData = shouldDouble ? [...data, ...data] : data
+  
+  return finalData.map((item, index) => ({
     ...item,
     uniqueId: `${item.id}-${index}`
   }))
 })
 
 const alarmTable = ref()
+const scrollTimer = ref(null)
 onMounted(() => {
   store.dispatch('startPollingAlarms');
 
@@ -81,7 +78,7 @@ onMounted(() => {
     demo.addEventListener('mouseout', () => {
       tableScroll.value = true
     })
-    const scrollTimer = setInterval(() => {
+    scrollTimer.value = setInterval(() => {
       if (!alarmTable.value || !tableScroll.value) return
       
       const demo = alarmTable.value.$refs.bodyWrapper?.getElementsByClassName('el-scrollbar__wrap')[0]
@@ -93,18 +90,18 @@ onMounted(() => {
         // Since we repeated at least twice, scrollHeight/2 is a safe boundary
         // but it's better to reset based on original list height.
         // However, with our 'while' loop, midpoint is safer.
-        if (demo.scrollTop >= demo.scrollHeight / 2) {
+        if (demo.scrollTop >= demo.scrollHeight / 2 && tableData.value.length > 5) {
           demo.scrollTop = 0
         }
       }
     }, 20)
 
-    onUnmounted(() => {
-      clearInterval(scrollTimer)
-    })
-
   })
 
+})
+
+onUnmounted(() => {
+  if (scrollTimer.value) clearInterval(scrollTimer.value)
 })
 const rowstyle = ({ row, rowIndex }) => {
   if (rowIndex % 2 == 0) {

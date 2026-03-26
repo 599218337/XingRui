@@ -49,27 +49,23 @@
     .scrollable-column {
       flex: 1;
       height: 100%;
-      overflow-y: auto;
+      overflow: hidden;
       padding: 0 5px;
-
-      &::-webkit-scrollbar {
-        width: 3px;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: rgba(0, 240, 255, 0.4);
-        border-radius: 2px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
     }
 
-    .side-column {
+    .scroll-wrapper {
       display: flex;
       flex-direction: column;
       gap: 10px;
+      width: 100%;
+
+      &.animate-scroll {
+        animation: vertical-scroll 30s linear infinite;
+
+        &:hover {
+          animation-play-state: paused;
+        }
+      }
     }
 
     .cyber-item {
@@ -182,5 +178,14 @@
     height: 1px;
     background: url("/image/line.png");
     background-size: 100% 100%;
+  }
+}
+
+@keyframes vertical-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(calc(-50% - 5px)); // -50% for the double list, -5px for half of the gap
   }
 }

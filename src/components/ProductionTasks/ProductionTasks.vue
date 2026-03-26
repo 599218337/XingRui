@@ -12,7 +12,8 @@
       <span>生产负荷监控</span>
     </div>
     <div class="content">
-      <el-table :data="displayData" style="width: 100%;height: 100%;" ref="alarmTable" size='small' :row-style="rowstyle" row-key="uniqueId">
+      <el-table :data="displayData" style="width: 100%;height: 100%;" ref="alarmTable" size='small'
+        :row-style="rowstyle" row-key="uniqueId">
         <el-table-column prop="id" label="位号" show-overflow-tooltip align="center" />
         <el-table-column prop="name" label="名称" show-overflow-tooltip align="center" />
         <el-table-column label="实时电流/流量" width="120" align="center">
@@ -40,11 +41,18 @@ const tableData = ref(electricData.map((item, index) => ({
   unit: item.unit || 'A'
 })))
 const alarmTable = ref(null)
+const scrollTimer = ref(null)
+const dataTimer = ref(null)
 
 const displayData = computed(() => {
-  if (tableData.value.length === 0) return []
-  // Double the data to create a seamless loop
-  return [...tableData.value, ...tableData.value].map((item, index) => ({
+  const data = tableData.value
+  if (data.length === 0) return []
+
+  // Only double the data for seamless loop if we have enough items
+  const shouldDouble = data.length > 5
+  const finalData = shouldDouble ? [...data, ...data] : data
+
+  return finalData.map((item, index) => ({
     ...item,
     uniqueId: `${item.id}-${index}`
   }))
@@ -89,39 +97,36 @@ onMounted(() => {
       demo.addEventListener('mouseout', () => {
         tableScroll.value = true
       })
-      const scrollTimer = setInterval(() => {
+      scrollTimer.value = setInterval(() => {
         if (tableScroll.value) {
           // If content is shorter than container, no need to scroll
           // But with doubled data, scrollHeight is 2x. We reset at 1x height.
           if (demo.scrollHeight > demo.clientHeight * 2) {
-             demo.scrollTop += 1
-             if (demo.scrollTop >= demo.scrollHeight / 2) {
-               demo.scrollTop = 0
-             }
+            demo.scrollTop += 1
+            if (demo.scrollTop >= demo.scrollHeight / 2 && tableData.value.length > 5) {
+              demo.scrollTop = 0
+            }
           } else if (demo.scrollHeight > demo.clientHeight) {
-             // If doubled data is more than container but not necessarily twice container
-             // We can still try to loop if scrollHeight / 2 > some threshold
-             demo.scrollTop += 1
-             if (demo.scrollTop >= demo.scrollHeight / 2) {
-               demo.scrollTop = 0
-             }
+            // If doubled data is more than container but not necessarily twice container
+            // We can still try to loop if scrollHeight / 2 > some threshold
+            demo.scrollTop += 1
+            if (demo.scrollTop >= demo.scrollHeight / 2 && tableData.value.length > 5) {
+              demo.scrollTop = 0
+            }
           }
         }
       }, 50)
-
-      onUnmounted(() => {
-        clearInterval(scrollTimer)
-      })
     }
   })
 
-  const timer = setInterval(() => {
+  dataTimer.value = setInterval(() => {
     getRealtimeData()
   }, 1000 * 30)
+})
 
-  onUnmounted(() => {
-    clearInterval(timer)
-  })
+onUnmounted(() => {
+  if (scrollTimer.value) clearInterval(scrollTimer.value)
+  if (dataTimer.value) clearInterval(dataTimer.value)
 })
 
 </script>

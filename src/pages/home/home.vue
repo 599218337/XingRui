@@ -407,14 +407,14 @@ const pickPoint = () => {
 
   <div class="home" ref="homeref" id="home-container">
 
-    <!-- <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button> -->
+    <el-button @click="pickPoint" style="position: absolute; top: 100px; left: 100px; z-index: 1000;">取点</el-button>
     <!-- loading -->
     <headerNav></headerNav>
     <div class="time">
       {{ time }}
     </div>
     <div id="map_tool">
-      <viewChange></viewChange>
+      <viewChange :viewer="viewer"></viewChange>
     </div>
 
     <!--左侧图表 -->

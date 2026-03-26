@@ -72,12 +72,6 @@ export const devicePVList = [
         "minValue": 1.16
     },
     {
-        "id": "LI_1216_AI1_PV",
-        "name": "4V1216液位检测",
-        "maxValue": 7000,
-        "minValue": 300
-    },
-    {
         "id": "_2FIC_2002A_AI1_PV",
         "name": "1号回路盐水流量调节",
         "maxValue": 44,
@@ -392,77 +386,12 @@ export const devicePVList = [
         "minValue": 600
     },
     {
-        "id": "_2PIC_5505_AI1_PV",
-        "name": "二期尾氯压力调节",
-        "maxValue": 95,
-        "minValue": 5
-    },
-    {
         "id": "_2PI_5066_AI1_PV",
         "name": "二期氯气分配台压力",
         "maxValue": 700,
         "minValue": 100
     },
-    {
-        "id": "_2LI_5502A_AI1_PV",
-        "name": "二期A号液氯储槽DCS雷达液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5502B_AI1_PV",
-        "name": "二期B号液氯储槽DCS雷达液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5502C_AI1_PV",
-        "name": "二期C号液氯储槽DCS雷达液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5502D_AI1_PV",
-        "name": "二期D号液氯储槽DCS雷达液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5502E_AI1_PV",
-        "name": "二期E号液氯储槽DCS雷达液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5501A_AI1_PV",
-        "name": "二期A号液氯储槽差压液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5501B_AI1_PV",
-        "name": "二期B号液氯储槽差压液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5501C_AI1_PV",
-        "name": "二期C号液氯储槽差压液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5501D_AI1_PV",
-        "name": "二期D号液氯储槽差压液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
-    {
-        "id": "_2LI_5501E_AI1_PV",
-        "name": "二期E号液氯储槽差压液位",
-        "maxValue": 1850,
-        "minValue": 150
-    },
+
     {
         "id": "_2LI_5006A_AI1_PV",
         "name": "次氯酸钠循环槽2V5004A液位指示",
@@ -500,12 +429,6 @@ export const devicePVList = [
         "minValue": 8
     },
     {
-        "id": "_2PIC_5022_AI1_PV",
-        "name": "氯气负压总管补齐压力调节",
-        "maxValue": -0.5,
-        "minValue": -6
-    },
-    {
         "id": "_2FI_5022_AI1_PV",
         "name": "除害塔上塔次钠流量",
         "maxValue": 250,
@@ -522,11 +445,6 @@ export const devicePVList = [
         "name": "氢气洗涤塔液位调节",
         "maxValue": 1500,
         "minValue": 300
-    },
-    {
-        "id": "_2PIC_5215_Z_PID1_PV",
-        "name": "氢压机回流阀控制主回路",
-        "maxValue": 3
     },
     {
         "id": "_2PIC_5214_2_AI1_PV",
@@ -666,12 +584,7 @@ export const devicePVList = [
         "maxValue": 0.38,
         "minValue": 0
     },
-    {
-        "id": "_2AI_9701_AI1_PV",
-        "name": "来自混床纯水电导率",
-        "maxValue": 9,
-        "minValue": 0.1
-    },
+
     {
         "id": "_2LI_9101_AI1_PV",
         "name": "循环水池液位指示",
@@ -695,24 +608,6 @@ export const devicePVList = [
         "name": "初期雨水收集池液位指示联锁",
         "maxValue": 2000,
         "minValue": 300
-    },
-    {
-        "id": "_2TE_9401A_AI1_PV",
-        "name": "直燃型溴化锂吸收冷冻水机组冷水出口管道温度指示",
-        "maxValue": 17,
-        "minValue": 3
-    },
-    {
-        "id": "_2TE_9401B_AI1_PV",
-        "name": "直燃型溴化锂吸收冷冻水机组冷水出口管道温度指示",
-        "maxValue": 17,
-        "minValue": 3
-    },
-    {
-        "id": "_2TE_9402_AI1_PV",
-        "name": "去PVC聚合生产装置冷冻水管道温度指示",
-        "maxValue": 17,
-        "minValue": 3
     },
     {
         "id": "_2LI_9401A_AI1_PV",

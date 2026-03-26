@@ -42,7 +42,7 @@ function calculateSignature(method, uri, query = {}, headers = {}) {
     return { signature: `Sign ${ak}-${signature}`, canonicalRequest }
 }
 
-export async function fetchDeviceData(id) {
+export async function fetchDeviceData(id, timeout = 10000) {
     // 构造查询的 inputKey
     const inputKey = "system.RemoteCollector.supos.system." + id;
 
@@ -69,21 +69,35 @@ export async function fetchDeviceData(id) {
     const queryString = new URLSearchParams(testParams.query).toString()
     const fullUrl = `${testParams.uri}${queryString ? '?' + queryString : ''}`
 
-    // 发送请求
-    const response = await fetch(fullUrl, {
-        method: testParams.method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader
-        },
-        body: testParams.body
-    })
+    // 超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const data = await response.json()
-    if (data.code === 200 && data.data && data.data[inputKey]) {
-        // 只返回响应数据里面的 value
-        return data.data[inputKey].value
-    } else {
-        throw new Error(data.message || '获取数据失败或格式不正确')
+    try {
+        // 发送请求
+        const response = await fetch(fullUrl, {
+            method: testParams.method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader
+            },
+            body: testParams.body,
+            signal: controller.signal
+        })
+        clearTimeout(timeoutId);
+
+        const data = await response.json()
+        if (data.code === 200 && data.data && data.data[inputKey]) {
+            // 只返回响应数据里面的 value
+            return data.data[inputKey].value
+        } else {
+            throw new Error(data.message || '获取数据失败或格式不正确')
+        }
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error(`接口请求超时 (${timeout}ms): ${id}`);
+        }
+        throw error;
     }
 }
