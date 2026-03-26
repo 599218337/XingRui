@@ -390,19 +390,19 @@ onMounted(() => {
 
   // --- Simulation Start ---
   // Simulate an alarm for _2TIC_1201_AI1_PV (Grid-based alarm)
-  const mockAlarm = {
-    id: '_2LICA_1604_AI1_PV',
-    name: '纯水槽液位控制',
-    alarmText: '高报网格仿真',
-    color: '#FF4D4F',
-    currentValue: 65,
-    time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-    address: '模拟设备'
-  };
+  // const mockAlarm = {
+  //   id: '_2LI_1202_AI1_PV',
+  //   name: '盐水中间池液位联锁报警',
+  //   alarmText: '高报网格仿真',
+  //   color: '#FF4D4F',
+  //   currentValue: 65,
+  //   time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+  //   address: '模拟设备'
+  // };
 
   // Add to store's alarm list after a short delay
   setTimeout(() => {
-    store.commit('setAlarmList', [mockAlarm, ...store.state.alarmList]);
+    store.commit('setAlarmList', store.state.alarmList);
   }, 1500);
   // --- Simulation End ---
 

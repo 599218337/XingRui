@@ -100,15 +100,16 @@ function createOrUpdateGasLeak(viewer, id, position, colorStr, gasType) {
       image: getGasTexture(),
       startColor: color.withAlpha(0.8),
       endColor: color.withAlpha(0.0),
-      imageSize: new gs3d.Cesium.Cartesian2(3, 3), // 基础大小
+      imageSize: new gs3d.Cesium.Cartesian2(5, 5), // 稍微调大基础大小
       startScale: 0.5,
       endScale: 8.0,
-      minimumParticleLife: 2.0,
-      maximumParticleLife: 4.0,
-      minimumSpeed: 5.0,
-      maximumSpeed: 12.0,
-      emissionRate: 80.0,
-      emitter: new gs3d.Cesium.ConeEmitter(gs3d.Cesium.Math.toRadians(10.0)),
+      minimumParticleLife: 0.0,
+      maximumParticleLife: 1.0,
+      minimumSpeed: 2.0,
+      maximumSpeed: 5.0,
+      emissionRate: 480.0,
+      // 增大发射锥角，让气体向四周有扩散效果
+      emitter: new gs3d.Cesium.ConeEmitter(gs3d.Cesium.Math.toRadians(35.0)),
       modelMatrix: modelMatrix,
       loop: true
     };
@@ -126,7 +127,7 @@ function createOrUpdateGasLeak(viewer, id, position, colorStr, gasType) {
       endColor: color.withAlpha(0.0),
       imageSize: new gs3d.Cesium.Cartesian2(4, 4),
       startScale: 2.0,
-      endScale: 15.0,
+      endScale: 10.0,
       minimumParticleLife: 3.0,
       maximumParticleLife: 6.0,
       minimumSpeed: 0.5,
@@ -193,8 +194,8 @@ class HtmlOverlay {
         if (this.data.visible !== false) {
           this.element.style.display = 'block';
         }
-        this.element.style.left = (canvasPosition.x - this.element.offsetWidth / 2) + 'px';
-        this.element.style.top = (canvasPosition.y - this.element.offsetHeight - 15) + 'px';
+        this.element.style.left = (canvasPosition.x + 15) + 'px';
+        this.element.style.top = (canvasPosition.y - this.element.offsetHeight / 2) + 'px';
       } else {
         this.element.style.display = 'none';
       }
@@ -229,7 +230,7 @@ class HtmlOverlay {
     return `
       <style>
           #panel-${this.data.id}::after {
-              border-color: ${this.data.color} transparent transparent !important;
+              border-color: transparent ${this.data.color} transparent transparent !important;
           }
           #panel-${this.data.id} .panel-header {
               color: ${this.data.color};
@@ -378,6 +379,7 @@ const fetchStatuses = async () => {
     try {
       let val = await fetchDeviceData(item.position_code)
       let color = getStatusColor(item, val)
+
 
       deviceStatus.value[item.position_code] = {
         value: val,
@@ -555,10 +557,10 @@ body {
   .alarm-panel-content::after {
     content: '';
     position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 10px 10px 0;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 10px 10px 10px 0;
     border-style: solid;
     border-color: transparent;
     /* Updated dynamically via JS */

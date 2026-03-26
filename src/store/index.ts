@@ -12,6 +12,7 @@ import createPersistedState from 'vuex-persistedstate';
 // 模块
 import moduleA from './modules/moduleA';
 import moduleB from './modules/moduleB';
+import personnel from './modules/personnel';
 
 // Vue.use(Vuex)
 const debug = process.env.NODE_ENV !== 'production'
@@ -23,6 +24,7 @@ export default createStore({
   modules: {
     moduleA,
     moduleB,
+    personnel
   },
   plugins: [createPersistedState({
     storage: window.sessionStorage,

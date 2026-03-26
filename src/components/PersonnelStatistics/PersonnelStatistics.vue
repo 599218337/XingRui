@@ -27,83 +27,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useStore } from 'vuex'
 
-const loading = ref(false)
-
-const getPersonApiToken = async () => {
-// ... existing code ...
-  let token;
-  await fetch('/people-locate/api/v2/get-token', {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "837E4298041D73923169079720895C06", },
-    body: JSON.stringify({
-      "appId": "client",
-      "buildIdList": [
-        "209094"
-      ]
-    })
-  }).then(res => {
-    if (!res.ok) {
-      throw Error(res.statusText)
-    }
-    return res.json()
-  }).then(json => {
-    token = json.data
-  })
-  return token;
-}
-
-// 判断点是否在多边形内（射线法）
-const PERSON_AREA_POLYGON = [
-  [111.41098823911135, 30.555326852157116],
-  [111.40965179382539, 30.556139759665626],
-  [111.40775444349205, 30.55431860799904],
-  [111.4092221018413, 30.55322451754084],
-  [111.41098823911135, 30.555326852157116],
-]
-const isPointInPolygon = (lon, lat, polygon) => {
-  let inside = false
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i][0], yi = polygon[i][1]
-    const xj = polygon[j][0], yj = polygon[j][1]
-    const intersect = ((yi > lat) !== (yj > lat)) &&
-      (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)
-    if (intersect) inside = !inside
-  }
-  return inside
-}
-
-const getPersonList = async (token) => {
-  let personList;
-  await fetch('/people-locate/api/v2/person/realTimeData', {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "token": token, },
-    body: JSON.stringify({
-      "buildId": "209094"
-    })
-  }).then(res => {
-    if (!res.ok) {
-      throw Error(res.statusText)
-    }
-    return res.json()
-  }).then(json => {
-    personList = json.data
-    personList = personList.reduce((pre, cur) => {
-      const lon = Number(cur.longitude)
-      const lat = Number(cur.latitude)
-      if (isPointInPolygon(lon, lat, PERSON_AREA_POLYGON)) {
-        if (!pre.has(cur.department)) {
-          pre.set(cur.department, [cur])
-        } else {
-          pre.get(cur.department).push(cur)
-        }
-      }
-      return pre;
-    }, new Map())
-  })
-  return personList;
-}
+const store = useStore()
+const loading = computed(() => store.state.personnel.loading)
+const personnelMap = computed(() => store.state.personnel.personnelMap)
 
 const infoArry = ref([
   {
@@ -114,11 +43,7 @@ const infoArry = ref([
   },
 ])
 
-onMounted(async () => {
-  loading.value = true
-  let token = await getPersonApiToken()
-  let personMap = await getPersonList(token)
-
+const updateInfoArray = (personMap) => {
   let total = 0
   let dynamicItems = []
   let imgIndex = 2
@@ -132,7 +57,7 @@ onMounted(async () => {
       label1: deptName,
       label2: list.length + '人'
     })
-    
+
     // Cycle images from 2 to 6
     imgIndex++
     if (imgIndex > 6) imgIndex = 2
@@ -147,8 +72,18 @@ onMounted(async () => {
     },
     ...dynamicItems
   ]
-  loading.value = false
+}
+
+watch(personnelMap, (newMap) => {
+  if (newMap) {
+    updateInfoArray(newMap)
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  store.dispatch('personnel/startPolling')
 })
+
 
 </script>
 
