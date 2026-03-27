@@ -92,7 +92,7 @@
           <div class="device-detail-popup__row">
             <span class="device-detail-popup__label">当前状态</span>
             <span class="device-detail-popup__value" :style="{ color: deviceStatus.color }">{{ deviceStatus.text
-            }}</span>
+              }}</span>
           </div>
           <div v-if="currentGridCode" class="device-detail-popup__row">
             <span class="device-detail-popup__label">北斗码</span>
@@ -146,7 +146,7 @@
               <span style="float: left">{{ item.name }}</span>
               <span style="float: right; color: rgba(125, 194, 254, 0.6); font-size: 12px; margin-left: 15px;">{{
                 item.id
-              }}</span>
+                }}</span>
             </el-option>
           </el-select>
         </div>
@@ -390,19 +390,27 @@ onMounted(() => {
 
   // --- Simulation Start ---
   // Simulate an alarm for _2TIC_1201_AI1_PV (Grid-based alarm)
-  // const mockAlarm = {
-  //   id: '_2LI_1202_AI1_PV',
-  //   name: '盐水中间池液位联锁报警',
-  //   alarmText: '高报网格仿真',
-  //   color: '#FF4D4F',
-  //   currentValue: 65,
-  //   time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-  //   address: '模拟设备'
-  // };
+  const mockAlarm = [{
+    id: '_2LI_1202_AI1_PV',
+    name: '盐水中间池液位联锁报警',
+    alarmText: '高报网格仿真',
+    color: '#FF4D4F',
+    currentValue: 65,
+    time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    address: '模拟设备'
+  }, {
+    id: '_2AIC_1204_AI1_PV',
+    name: '一次精盐水PH控制',
+    alarmText: '高报网格仿真',
+    color: '#FF4D4F',
+    currentValue: 65,
+    time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    address: '模拟设备'
+  }];
 
   // Add to store's alarm list after a short delay
   setTimeout(() => {
-    store.commit('setAlarmList', store.state.alarmList);
+    store.commit('setAlarmList', [...mockAlarm, ...store.state.alarmList]);
   }, 1500);
   // --- Simulation End ---
 
@@ -506,7 +514,7 @@ const updateTilesetStyle = (list) => {
 
   // 2. 加上默认的基础颜色逻辑
   const isSpecialView = store.state.showFire || store.state.showGds
-  const wallColor = isSpecialView ? "color('#FFFFFF')" : "color('#0099FF')"
+  const wallColor = isSpecialView ? "color('#bfbebe')" : "color('#0099FF')"
 
   conditions.push(["regExp('^jy_').test(${name})", "color('#CC0099')"])
   conditions.push(["regExp('^lq_').test(${name})", "color('#00CC33')"])

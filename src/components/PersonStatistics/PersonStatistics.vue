@@ -54,11 +54,11 @@
         <div class="info-row"><span class="label">部门：</span><span class="value">{{ currentPerson?.department }}</span>
         </div>
         <div class="info-row"><span class="label">工种：</span><span class="value">{{ currentPerson?.worktypename || '无'
-            }}</span></div>
+        }}</span></div>
         <div class="info-row"><span class="label">电话：</span><span class="value">{{ currentPerson?.tel || '无' }}</span>
         </div>
         <div class="info-row"><span class="label">北斗码：</span><span class="value">{{ beidouGridCodeLoading ? '加载中...' :
-            beidouGridCode }}</span>
+          beidouGridCode }}</span>
         </div>
       </div>
     </div>
@@ -238,7 +238,7 @@ watch(peopleList, (newMap) => {
     activeName.value = [...newMap.keys()][0]
     departTypeList.value = []
     Array.from(newMap.values()).forEach(element => {
-      const dept = element[0].department || '一线员工'
+      const dept = element[0].department || '相关方人员'
       departTypeList.value.push({
         label: dept,
         value: dept,

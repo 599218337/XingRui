@@ -38,7 +38,7 @@ const infoArry = ref([
   {
     id: 0,
     img: '/image/1.png',
-    label1: '总人数',
+    label1: '区域内总人数',
     label2: '0人'
   },
 ])
@@ -49,7 +49,7 @@ const updateInfoArray = (personMap) => {
   let imgIndex = 2
 
   personMap.forEach((list, department) => {
-    const deptName = department || '一线员工'
+    const deptName = department || '相关方人员'
     total += list.length
     dynamicItems.push({
       id: dynamicItems.length + 1,
@@ -67,7 +67,7 @@ const updateInfoArray = (personMap) => {
     {
       id: 0,
       img: '/image/1.png',
-      label1: '总人数',
+      label1: '区域内总人数',
       label2: total + '人'
     },
     ...dynamicItems

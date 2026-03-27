@@ -14,7 +14,8 @@
     <div class="content">
       <div class="column-container">
         <div class="side-column scrollable-column">
-          <div class="scroll-wrapper" :class="{ 'animate-scroll': leftData.length > 3 }" :style="{ animationDuration: leftData.length * 6 + 's' }">
+          <div class="scroll-wrapper" :class="{ 'animate-scroll': leftData.length > 3 }"
+            :style="{ animationDuration: leftData.length * 6 + 's' }">
             <div class="cyber-item" v-for="(item, index) in leftData" :key="'l-' + index">
               <div class="item-header">
                 <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
@@ -31,7 +32,8 @@
               <div class="item-decor"></div>
             </div>
             <!-- Duplicate for seamless loop -->
-            <div v-if="leftData.length > 3" class="cyber-item" v-for="(item, index) in leftData" :key="'l-dup-' + index">
+            <div v-if="leftData.length > 3" class="cyber-item" v-for="(item, index) in leftData"
+              :key="'l-dup-' + index">
               <div class="item-header">
                 <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
                 <div class="item-percent">{{ item.label3 }}</div>
@@ -50,7 +52,8 @@
         </div>
 
         <div class="side-column scrollable-column">
-          <div class="scroll-wrapper" :class="{ 'animate-scroll': rightData.length > 3 }" :style="{ animationDuration: rightData.length * 6 + 's' }">
+          <div class="scroll-wrapper" :class="{ 'animate-scroll': rightData.length > 3 }"
+            :style="{ animationDuration: rightData.length * 6 + 's' }">
             <div class="cyber-item" v-for="(item, index) in rightData" :key="'r-' + index">
               <div class="item-header">
                 <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
@@ -67,7 +70,8 @@
               <div class="item-decor"></div>
             </div>
             <!-- Duplicate for seamless loop -->
-            <div v-if="rightData.length > 3" class="cyber-item" v-for="(item, index) in rightData" :key="'r-dup-' + index">
+            <div v-if="rightData.length > 3" class="cyber-item" v-for="(item, index) in rightData"
+              :key="'r-dup-' + index">
               <div class="item-header">
                 <div class="item-label" :title="item.label1">{{ item.label1 }}</div>
                 <div class="item-percent">{{ item.label3 }}</div>
@@ -117,7 +121,20 @@ onMounted(async () => {
     // Grouping by material name
     const groupedMap = new Map();
     data.forEach(item => {
-      const name = item['物料名称'];
+      let name = item['物料名称'];
+      if (name === '工业级液碱48%') {
+        name = '48%液碱'
+      } else if (name === "工业级液碱32%") {
+        name = '32%液碱'
+      } else if (name === "液态离子膜氢氧化钾-48%离子膜") {
+        name = "48%氢氧化钾"
+      } else if (name === "磷酸三辛酯99%") {
+        name = "99%磷酸三辛酯"
+      } else if (name === "工业级双氧水27.5%") {
+        name = "27.5%双氧水"
+      } else if (name === "工业级双氧水35.5%") {
+        name = "35.5%双氧水"
+      }
       const currentLevel = parseFloat(item['当前罐量']) || 0;
       const maxLevel = parseFloat(item['最大罐量']) || 0;
 

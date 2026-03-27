@@ -209,7 +209,7 @@ const applyPerFeatureColors = () => {
   if (tileset) {
     // 当消防或气体统计打开时，将模型的默认颜色改为白色
     const isSpecialView = store.state.showFire || store.state.showGds
-    const wallColor = isSpecialView ? "color('#FFFFFF')" : "color('#0099FF')"
+    const wallColor = isSpecialView ? "color('#bfbebe')" : "color('#0099FF')"
 
     tileset.style = new Cesium.Cesium3DTileStyle({
       color: {

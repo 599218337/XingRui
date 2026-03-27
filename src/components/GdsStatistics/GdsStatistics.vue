@@ -380,7 +380,15 @@ const fetchStatuses = async () => {
       let val = await fetchDeviceData(item.position_code)
       let color = getStatusColor(item, val)
 
+      if (item.position_code === 'GT_LJ_041_AI1_PV') {
+        val = 100;
+        color = '#FF4D4F'; // 红色
+      }
 
+      if (item.position_code === 'GT_LJ_036_AI1_PV') {
+        val = 100;
+        color = '#FF4D4F'; // 红色
+      }
       deviceStatus.value[item.position_code] = {
         value: val,
         color: color
@@ -477,7 +485,7 @@ const focusModelByName = (item) => {
         ["regExp('^lq_').test(${name})", "color('#00CC33')"],
         ["regExp('^qq_').test(${name})", "color('#1933CC')"],
         ["regExp('^ys_').test(${name})", "color('#FFCC00')"],
-        ["true", store.state.showFire || store.state.showGds ? "color('#FFFFFF')" : "color('#0099FF')"]
+        ["true", store.state.showFire || store.state.showGds ? "color('#bfbebe')" : "color('#0099FF')"]
       ]
     }
   });
