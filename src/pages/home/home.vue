@@ -104,8 +104,14 @@ watch(() => store.state.showAside, (val) => {
   document.getElementById('map_tool').style.transition = `transform ${t}s`
 })
 
-// 监听消防/气体统计面板的打开，修改模型默认颜色
-watch([() => store.state.showFire, () => store.state.showGds], () => {
+// 监听消防/气体/设备/监控/人员统计面板的打开，修改模型默认颜色
+watch([
+  () => store.state.showFire,
+  () => store.state.showGds,
+  () => store.state.showDevices,
+  () => store.state.showCamera,
+  () => store.state.showPerson
+], () => {
   if (activeEffect.value === 'xray') {
     applyPerFeatureColors()
   }

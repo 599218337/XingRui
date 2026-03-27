@@ -18,7 +18,7 @@
         <el-table-column prop="name" label="名称" show-overflow-tooltip align="center" />
         <el-table-column label="实时电流/流量" width="120" align="center">
           <template #default="{ row }">
-            {{ row.complete }} {{ row.unit }}
+            <span :class="{ 'is-current': row.name.includes('电流') }">{{ row.complete }}</span> {{ row.unit }}
           </template>
         </el-table-column>
       </el-table>
@@ -162,5 +162,9 @@ onUnmounted(() => {
 
 :deep(.el-scrollbar::after) {
   height: 0px !important;
+}
+
+.is-current {
+  color: #00FF7A;
 }
 </style>

@@ -22,7 +22,11 @@
           <template v-for="item in items" :key="item.position_code">
             <div class="contentItem">
               <div class="Item">
-                <div class="point" :style="{ background: deviceStatus[item.position_code]?.color || '#00FF7A' }"></div>
+                <div
+                  v-if="deviceStatus[item.position_code]?.color === '#FF4D4F' || deviceStatus[item.position_code]?.color === '#FFA940'"
+                  class="abnormal-tag">异常</div>
+                <div v-else class="point" :style="{ background: deviceStatus[item.position_code]?.color || '#00FF7A' }">
+                </div>
                 <div class="text">{{ item.position_code }} - {{ item.location }}</div>
               </div>
               <div class="icon">
@@ -321,6 +325,7 @@ const groupedDeviceList = computed(() => {
 const searchModelName = ref('')
 
 // 状态追踪
+const isMounted = ref(false)
 const deviceStatus = ref({}) // { position_code: { value: 0, color: '#00FF7A' } }
 
 const getNumericValue = (str) => {
@@ -378,17 +383,19 @@ const fetchStatuses = async () => {
   await Promise.all(gdsDataPoints.map(async (item) => {
     try {
       let val = await fetchDeviceData(item.position_code)
+      if (!isMounted.value) return;
+
       let color = getStatusColor(item, val)
 
-      if (item.position_code === 'GT_LJ_041_AI1_PV') {
-        val = 100;
-        color = '#FF4D4F'; // 红色
-      }
+      // if (item.position_code === 'GT_LJ_041_AI1_PV') {
+      //   val = 100;
+      //   color = '#FF4D4F'; // 红色
+      // }
 
-      if (item.position_code === 'GT_LJ_036_AI1_PV') {
-        val = 100;
-        color = '#FF4D4F'; // 红色
-      }
+      // if (item.position_code === 'GT_LJ_036_AI1_PV') {
+      //   val = 100;
+      //   color = '#FF4D4F'; // 红色
+      // }
       deviceStatus.value[item.position_code] = {
         value: val,
         color: color
@@ -475,6 +482,10 @@ const focusModelByName = (item) => {
   const nameToFind = item.position_code;
   if (!nameToFind) return;
 
+  if (activeOverlays[nameToFind]) {
+    activeOverlays[nameToFind].data.visible = true;
+  }
+
   tileset.style = new gs3d.Cesium.Cesium3DTileStyle({
     color: {
       conditions: [
@@ -509,15 +520,18 @@ const focusModelByName = (item) => {
 
 let timer = null;
 onMounted(() => {
+  isMounted.value = true
   fetchStatuses()
   timer = setInterval(fetchStatuses, 60000) // 每分钟更新一次
 
   setTimeout(() => {
+    if (!isMounted.value) return
     showContent.value = true
   }, 100) // slight delay to allow DOM to render first, then apply transition
 })
 
 onUnmounted(() => {
+  isMounted.value = false
   if (timer) clearInterval(timer);
   Object.values(activeOverlays).forEach(overlay => overlay.destroy());
   Object.values(activeEntities).forEach(entityInfo => {

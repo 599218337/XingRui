@@ -410,7 +410,7 @@ onMounted(() => {
 
   // Add to store's alarm list after a short delay
   setTimeout(() => {
-    store.commit('setAlarmList', [...mockAlarm, ...store.state.alarmList]);
+    store.commit('setAlarmList', store.state.alarmList);
   }, 1500);
   // --- Simulation End ---
 

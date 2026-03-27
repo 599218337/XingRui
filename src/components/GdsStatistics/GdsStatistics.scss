@@ -110,6 +110,20 @@
             margin: 0 14px;
           }
 
+          .abnormal-tag {
+            background: #ff4d4f;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin: 0 6px 0 10px;
+            white-space: nowrap;
+            font-weight: bold;
+            line-height: 12px;
+            border: 1px solid #ff4d4f;
+            box-shadow: 0 0 4px #ff4d4f;
+          }
+
           .text {
             font-size: 12px;
             font-family: Alibaba PuHuiTi 3, Alibaba PuHuiTi 3-55 Regular;

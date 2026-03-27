@@ -583,12 +583,12 @@ onUnmounted(() => {
   emitter.off('nextStep', onNextStep)
   emitter.off('completeCamera', onCompleteCamera)
 
-  // 恢复模型原始颜色逻辑 (如果需要完全清除样式)
-  const entry = gs3d.global.variable.gs3dAllLayer.find((layerItem) => layerItem.id === 'noWallBuild')
-  const tileset = entry?.layer?.tileSet
-  if (tileset) {
-    tileset.style = undefined
-  }
+  // 恢复模型原始颜色逻辑 (由 home.vue 的 watch 统一处理)
+  // const entry = gs3d.global.variable.gs3dAllLayer.find((layerItem) => layerItem.id === 'noWallBuild')
+  // const tileset = entry?.layer?.tileSet
+  // if (tileset) {
+  //   tileset.style = undefined
+  // }
 })
 
 </script>
